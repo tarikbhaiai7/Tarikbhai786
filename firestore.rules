@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: brothers
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, 1-100 chars) - The name of the volunteer brother.
+    //   - whatsappNumber: string (required, 10-15 chars) - The WhatsApp number of the volunteer brother.
+    //   - createdAt: timestamp (required) - When the brother joined.
+    //
+    // Collection: emergencies
+    // Document ID: auto-generated
+    // Fields:
+    //   - timestamp: timestamp (required) - When the emergency was triggered.
+    //   - location: string (required, 1-500 chars) - Coordinates or location description.
+    //   - mapsLink: string (optional, 1-1000 chars) - Google Maps link to the location.
+    //   - status: string (required, enum: ['active', 'resolved']) - Current status of the emergency.
+    //   - triggerSource: string (required, 1-50 chars) - How the emergency was triggered.
+    //   - messages: list (optional, max 100 items) - Log of messages sent during the emergency.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "bazarnama.india@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidBrother(data) {
+      return data.keys().hasAll(['name', 'whatsappNumber', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.whatsappNumber is string && data.whatsappNumber.size() >= 10 && data.whatsappNumber.size() <= 15 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidEmergency(data) {
+      return data.keys().hasAll(['timestamp', 'location', 'status', 'triggerSource']) &&
+             data.timestamp is timestamp &&
+             data.location is string && data.location.size() > 0 && data.location.size() <= 500 &&
+             data.status in ['active', 'resolved'] &&
+             data.triggerSource is string && data.triggerSource.size() > 0 && data.triggerSource.size() <= 50 &&
+             (!('mapsLink' in data) || (data.mapsLink is string && data.mapsLink.size() <= 1000)) &&
+             (!('messages' in data) || (data.messages is list && data.messages.size() <= 100));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Brothers collection
+    match /brothers/{brotherId} {
+      // Anyone can read the list of brothers (to find help)
+      // In a real production app, we might want to limit this, but for this safety app, it's necessary.
+      allow read: if true; 
+      
+      // Anyone can join as a brother (public registration)
+      allow create: if isValidBrother(request.resource.data);
+      
+      // Only admins can update or delete brothers
+      allow update, delete: if isAdmin();
+    }
+
+    // Emergencies collection
+    match /emergencies/{emergencyId} {
+      // Only admins can read all emergencies
+      allow list: if isAdmin();
+      
+      // Anyone can create an emergency (public safety)
+      allow create: if isValidEmergency(request.resource.data);
+      
+      // Anyone can update an emergency (to add messages or resolve it)
+      // In a more secure version, we'd use a session ID or similar, 
+      // but for now, we allow updates if the data remains valid.
+      allow update: if isValidEmergency(request.resource.data);
+      
+      // Only admins can delete emergencies
+      allow delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

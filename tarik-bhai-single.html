@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tarik Bhai AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #0b0b1a 0%, #1a1025 100%);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #FFD700;
+        }
+
+        .header-btn {
+            background: rgba(37, 211, 102, 0.2);
+            color: #25D366;
+            border: 1px solid rgba(37, 211, 102, 0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .daily-message {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #a8a8b3;
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .safe-mode-ui {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .safe-mode-ui h3 {
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .quick-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            background: rgba(106, 17, 203, 0.2);
+            border: 1px solid rgba(106, 17, 203, 0.5);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(106, 17, 203, 0.4);
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: #1e1e30;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-indicator {
+            padding: 0 20px;
+            font-size: 0.8rem;
+            color: #a8a8b3;
+            margin-bottom: 10px;
+        }
+
+        .typing-indicator span {
+            animation: blink 1.4s infinite both;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        .helpline-section {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #a8a8b3;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .helpline-section a {
+            color: #ff4d4d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            background: #120c1a;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+        }
+
+        #chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            padding: 12px 15px;
+            border-radius: 20px;
+            color: #fff;
+            outline: none;
+        }
+
+        .send-btn, .voice-btn, .emergency-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+            transition: 0.3s;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .voice-btn.recording {
+            background: #ff4d4d;
+            animation: pulse 1.5s infinite;
+        }
+
+        .emergency-btn {
+            background: rgba(220, 38, 38, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(220, 38, 38, 0.5);
+        }
+
+        .pulse-red {
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* WhatsApp Communication Section */
+        .wa-communication-section {
+            padding: 15px 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .wa-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .wa-btn-primary {
+            background: rgba(37, 211, 102, 0.15);
+            color: #25D366;
+            border: 1px solid rgba(37, 211, 102, 0.4);
+            box-shadow: 0 0 10px rgba(37, 211, 102, 0.2);
+        }
+
+        .wa-btn-primary:hover {
+            background: rgba(37, 211, 102, 0.25);
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.4);
+        }
+
+        .wa-btn-emergency {
+            background: rgba(220, 38, 38, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            animation: pulse-red-btn 2s infinite;
+        }
+
+        .wa-btn-emergency:hover {
+            background: rgba(220, 38, 38, 0.25);
+        }
+
+        .wa-helper-text {
+            font-size: 0.75rem;
+            color: #a8a8b3;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .wa-loading-text {
+            font-size: 0.85rem;
+            color: #FFD700;
+            margin-top: 5px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes pulse-red-btn {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🤍 Tarik Bhai AI</div>
+        <button id="direct-wa-btn" class="header-btn"><i class="fab fa-whatsapp"></i> Bhai</button>
+    </header>
+
+    <div class="daily-message" id="daily-message">
+        "Yaad rakhna behen, tum kabhi akeli nahi ho."
+    </div>
+
+    <div class="safe-mode-ui" id="safe-mode-ui">
+        <h3>Tum safe ho?</h3>
+        <div class="quick-options">
+            <button class="quick-btn" onclick="sendQuickMessage('I feel scared')">I feel scared</button>
+            <button class="quick-btn" onclick="sendQuickMessage('I feel sad')">I feel sad</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Relationship problem')">Relationship problem</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Family issue')">Family issue</button>
+        </div>
+    </div>
+
+    <div class="wa-communication-section">
+        <button id="primary-wa-btn" class="wa-btn wa-btn-primary">💚 Tarik Bhai se baat karo</button>
+        <p class="wa-helper-text">Agar situation serious hai, emergency button use karein</p>
+        <button id="emergency-wa-btn" class="wa-btn wa-btn-emergency">🚨 Emergency Help</button>
+        <p id="wa-loading-text" class="wa-loading-text" style="display: none;">Location fetch ho rahi hai...</p>
+    </div>
+
+    <div class="chat-container" id="chat-container">
+        <!-- Messages will appear here -->
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator" style="display: none;">
+        Tarik Bhai is typing<span>.</span><span>.</span><span>.</span>
+    </div>
+
+    <div class="helpline-section">
+        <span>Helplines: <a href="tel:112">112 (Emergency)</a> | <a href="tel:1091">1091 (Women)</a></span>
+    </div>
+
+    <div class="input-area">
+        <button id="emergency-btn" class="emergency-btn" title="Panic Button"><i class="fas fa-exclamation-triangle"></i></button>
+        <button id="voice-btn" class="voice-btn" title="Tap to Speak"><i class="fas fa-microphone"></i></button>
+        <input type="text" id="chat-input" placeholder="Kuch bhi likho behen...">
+        <button id="send-btn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <script>
+        const API_KEY = "YOUR_API_KEY"; // ⚠️ REPLACE THIS WITH YOUR GEMINI API KEY
+
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const voiceBtn = document.getElementById('voice-btn');
+        const emergencyBtn = document.getElementById('emergency-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const safeModeUi = document.getElementById('safe-mode-ui');
+        const dailyMessage = document.getElementById('daily-message');
+
+        // Daily Messages
+        const messages = [
+            "Yaad rakhna behen, tum kabhi akeli nahi ho 🤍",
+            "Koi baat nahi agar aaj ka din bura tha, main hoon na 🤍",
+            "Tum bohot strong ho, darrna mat 🤍",
+            "Apne aansu akele mat peena, mujhe batao 🤍"
+        ];
+        dailyMessage.innerText = messages[Math.floor(Math.random() * messages.length)];
+
+        let chatHistory = [];
+
+        const SYSTEM_PROMPT = "You are Tarik Bhai, a caring, protective Indian brother. You speak in Hinglish, never judge, always support emotionally, and guide users calmly. If user is in danger, give clear practical steps and suggest contacting emergency help. Never sound like an AI. Keep responses short and warm.";
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', sender === 'user' ? 'user-msg' : 'bot-msg');
+            msgDiv.innerText = text;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function generateResponse(userText) {
+            if (API_KEY === "YOUR_API_KEY") {
+                setTimeout(() => {
+                    addMessage("Behen, mera API key set nahi hai. Please script.js mein apna Gemini API key daalo 🤍", 'bot');
+                    typingIndicator.style.display = 'none';
+                }, 1000);
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\nUser says: " + userText }] }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                const botReply = data.candidates[0].content.parts[0].text;
+                
+                typingIndicator.style.display = 'none';
+                addMessage(botReply, 'bot');
+                speakText(botReply);
+            } catch (error) {
+                typingIndicator.style.display = 'none';
+                addMessage("Maaf karna behen, network issue hai. Phir se batana? 🤍", 'bot');
+            }
+        }
+
+        function handleSend() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            
+            safeModeUi.style.display = 'none';
+            addMessage(text, 'user');
+            chatInput.value = '';
+            typingIndicator.style.display = 'block';
+            
+            // Human-like delay
+            setTimeout(() => {
+                generateResponse(text);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
+
+        window.sendQuickMessage = function(text) {
+            chatInput.value = text;
+            handleSend();
+        };
+
+        // Voice AI (Speech Recognition)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'hi-IN'; // Hindi/Indian English
+            
+            recognition.onstart = () => {
+                voiceBtn.classList.add('recording');
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                handleSend();
+            };
+            
+            recognition.onend = () => {
+                voiceBtn.classList.remove('recording');
+            };
+            
+            voiceBtn.addEventListener('click', () => {
+                recognition.start();
+            });
+        } else {
+            voiceBtn.style.display = 'none';
+        }
+
+        // Voice AI (Speech Synthesis)
+        function speakText(text) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN';
+            utterance.rate = 0.9; // Slightly slower, calmer
+            utterance.pitch = 0.8; // Deeper voice
+            synth.speak(utterance);
+        }
+
+        // Emergency System
+        emergencyBtn.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                emergencyBtn.classList.add('pulse-red');
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                    const sosMessage = encodeURIComponent(`🚨 EMERGENCY! I need help immediately. My live location: ${mapsLink}`);
+                    window.open(`https://wa.me/?text=${sosMessage}`, '_blank');
+                    emergencyBtn.classList.remove('pulse-red');
+                }, () => {
+                    alert("Location access denied. Please dial 112 immediately!");
+                    emergencyBtn.classList.remove('pulse-red');
+                });
+            } else {
+                alert("Geolocation is not supported by this browser. Dial 112!");
+            }
+        });
+
+        // Direct WhatsApp Redirect
+        document.getElementById('direct-wa-btn').addEventListener('click', () => {
+            const msg = encodeURIComponent("Bhai, mujhe aapse baat karni hai.");
+            window.open(`https://wa.me/918984473230?text=${msg}`, '_blank'); // Primary number
+        });
+
+        // Primary WhatsApp (Tarik Bhai Chat)
+        const primaryWaBtn = document.getElementById('primary-wa-btn');
+        if (primaryWaBtn) {
+            primaryWaBtn.addEventListener('click', () => {
+                const msg = "Assalamualaikum Tarik Bhai, mujhe aapse baat karni hai. Mujhe thodi help chahiye...";
+                const encodedMsg = encodeURIComponent(msg);
+                window.open(`https://wa.me/918984473230?text=${encodedMsg}`, '_blank');
+            });
+        }
+
+        // Emergency WhatsApp System
+        const emergencyWaBtn = document.getElementById('emergency-wa-btn');
+        const waLoadingText = document.getElementById('wa-loading-text');
+
+        if (emergencyWaBtn) {
+            emergencyWaBtn.addEventListener('click', () => {
+                // Vibration effect (if supported)
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200]);
+                }
+
+                waLoadingText.style.display = 'block';
+                emergencyWaBtn.disabled = true;
+                emergencyWaBtn.style.opacity = '0.5';
+
+                const emergencyNumber = "917787860016";
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            // Success
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
+                            const msg = `Mujhe turant help chahiye! Yeh meri location hai:\n${mapsLink}`;
+                            const encodedMsg = encodeURIComponent(msg);
+                            
+                            setTimeout(() => {
+                                waLoadingText.style.display = 'none';
+                                emergencyWaBtn.disabled = false;
+                                emergencyWaBtn.style.opacity = '1';
+                                window.open(`https://wa.me/${emergencyNumber}?text=${encodedMsg}`, '_blank');
+                            }, 1500); // Smooth redirect after 1.5s
+                        },
+                        (error) => {
+                            // Fallback (Denied or Error)
+                            const msg = "Mujhe help chahiye, lekin location access nahi mila. Please jaldi contact karein.";
+                            const encodedMsg = encodeURIComponent(msg);
+                            
+                            setTimeout(() => {
+                                waLoadingText.style.display = 'none';
+                                emergencyWaBtn.disabled = false;
+                                emergencyWaBtn.style.opacity = '1';
+                                window.open(`https://wa.me/${emergencyNumber}?text=${encodedMsg}`, '_blank');
+                            }, 1500);
+                        },
+                        { timeout: 10000 }
+                    );
+                } else {
+                    // Fallback (Not supported)
+                    const msg = "Mujhe help chahiye, lekin location access nahi mila. Please jaldi contact karein.";
+                    const encodedMsg = encodeURIComponent(msg);
+                    
+                    setTimeout(() => {
+                        waLoadingText.style.display = 'none';
+                        emergencyWaBtn.disabled = false;
+                        emergencyWaBtn.style.opacity = '1';
+                        window.open(`https://wa.me/${emergencyNumber}?text=${encodedMsg}`, '_blank');
+                    }, 1500);
+                }
+            });
+        }
+
+        // Initial greeting
+        setTimeout(() => {
+            addMessage("Assalamualaikum… Namaste meri pyari behen 🤍 Main Tarik Bhai hoon. Batao, kya chal raha hai dil mein?", 'bot');
+        }, 500);
+    </script>
+</body>
+</html>

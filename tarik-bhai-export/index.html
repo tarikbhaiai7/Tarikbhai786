@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tarik Bhai AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">🤍 Tarik Bhai AI</div>
+        <button id="direct-wa-btn" class="header-btn"><i class="fab fa-whatsapp"></i> Bhai</button>
+    </header>
+
+    <div class="daily-message" id="daily-message">
+        "Yaad rakhna behen, tum kabhi akeli nahi ho."
+    </div>
+
+    <div class="safe-mode-ui" id="safe-mode-ui">
+        <h3>Tum safe ho?</h3>
+        <div class="quick-options">
+            <button class="quick-btn" onclick="sendQuickMessage('I feel scared')">I feel scared</button>
+            <button class="quick-btn" onclick="sendQuickMessage('I feel sad')">I feel sad</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Relationship problem')">Relationship problem</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Family issue')">Family issue</button>
+        </div>
+    </div>
+
+    <div class="wa-communication-section">
+        <button id="primary-wa-btn" class="wa-btn wa-btn-primary">💚 Tarik Bhai se baat karo</button>
+        <p class="wa-helper-text">Agar situation serious hai, emergency button use karein</p>
+        <button id="emergency-wa-btn" class="wa-btn wa-btn-emergency">🚨 Emergency Help</button>
+        <p id="wa-loading-text" class="wa-loading-text" style="display: none;">Location fetch ho rahi hai...</p>
+    </div>
+
+    <div class="chat-container" id="chat-container">
+        <!-- Messages will appear here -->
+    </div>
+
+    <div class="typing-indicator" id="typing-indicator" style="display: none;">
+        Tarik Bhai is typing<span>.</span><span>.</span><span>.</span>
+    </div>
+
+    <div class="helpline-section">
+        <span>Helplines: <a href="tel:112">112 (Emergency)</a> | <a href="tel:1091">1091 (Women)</a></span>
+    </div>
+
+    <div class="input-area">
+        <button id="emergency-btn" class="emergency-btn" title="Panic Button"><i class="fas fa-exclamation-triangle"></i></button>
+        <button id="voice-btn" class="voice-btn" title="Tap to Speak"><i class="fas fa-microphone"></i></button>
+        <input type="text" id="chat-input" placeholder="Kuch bhi likho behen...">
+        <button id="send-btn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

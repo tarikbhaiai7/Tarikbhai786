@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Brother": {
+      "title": "Brother",
+      "description": "A volunteer who signs up to help girls in need.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the volunteer brother."
+        },
+        "whatsappNumber": {
+          "type": "string",
+          "description": "The WhatsApp number of the volunteer brother."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the brother joined."
+        }
+      },
+      "required": ["name", "whatsappNumber", "createdAt"]
+    },
+    "Emergency": {
+      "title": "Emergency",
+      "description": "An emergency alert triggered by a user.",
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "timestamp",
+          "description": "When the emergency was triggered."
+        },
+        "location": {
+          "type": "string",
+          "description": "Coordinates or location description."
+        },
+        "mapsLink": {
+          "type": "string",
+          "description": "Google Maps link to the location."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "resolved"],
+          "description": "Current status of the emergency."
+        },
+        "triggerSource": {
+          "type": "string",
+          "description": "How the emergency was triggered (manual/automatic)."
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sender": { "type": "string" },
+              "text": { "type": "string" },
+              "time": { "type": "string" }
+            }
+          },
+          "description": "Log of messages sent during the emergency."
+        }
+      },
+      "required": ["timestamp", "location", "status", "triggerSource"]
+    }
+  },
+  "firestore": {
+    "/brothers/{brotherId}": {
+      "schema": {
+        "$ref": "#/entities/Brother"
+      },
+      "description": "Collection of volunteer brothers."
+    },
+    "/emergencies/{emergencyId}": {
+      "schema": {
+        "$ref": "#/entities/Emergency"
+      },
+      "description": "Collection of emergency alerts."
+    }
+  }
+}
