@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, MapPin, MessageCircle } from 'lucide-react';
+import { AlertTriangle, MapPin, MessageCircle, Phone, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface PanicControlsProps {
@@ -7,13 +7,15 @@ interface PanicControlsProps {
   onPanic: () => void;
   onShareLocation: () => void;
   onWhatsApp: () => void;
+  onCheckIn: () => void;
 }
 
 export const PanicControls: React.FC<PanicControlsProps> = ({ 
   isPanicMode, 
   onPanic, 
   onShareLocation, 
-  onWhatsApp 
+  onWhatsApp,
+  onCheckIn
 }) => {
   return (
     <div className="flex flex-col px-1 pt-2 pb-1 gap-3">
@@ -42,22 +44,38 @@ export const PanicControls: React.FC<PanicControlsProps> = ({
         </span>
       </motion.button>
       
-      <div className="flex justify-between gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <motion.button 
           whileHover={{ scale: 1.02, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
           whileTap={{ scale: 0.98 }}
           onClick={onShareLocation}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 glass-card text-cyan-400 hover:text-cyan-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-cyan-500/20 shadow-lg uppercase tracking-widest"
+          className="flex items-center justify-center gap-2 py-3.5 glass-card text-cyan-400 hover:text-cyan-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-cyan-500/20 shadow-lg uppercase tracking-widest"
         >
-          <MapPin size={16} /> Broadcast Location
+          <MapPin size={14} /> Location
         </motion.button>
         <motion.button 
           whileHover={{ scale: 1.02, backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
           whileTap={{ scale: 0.98 }}
           onClick={onWhatsApp}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 glass-card text-green-400 hover:text-green-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-green-500/20 shadow-lg uppercase tracking-widest"
+          className="flex items-center justify-center gap-2 py-3.5 glass-card text-green-400 hover:text-green-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-green-500/20 shadow-lg uppercase tracking-widest"
         >
-          <MessageCircle size={16} /> Secure Connect
+          <MessageCircle size={14} /> WhatsApp
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => window.location.href = 'tel:9114411026'}
+          className="flex items-center justify-center gap-2 py-3.5 glass-card text-red-400 hover:text-red-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-red-500/20 shadow-lg uppercase tracking-widest"
+        >
+          <Phone size={14} /> Call Emergency
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onCheckIn}
+          className="flex items-center justify-center gap-2 py-3.5 glass-card text-cyan-400 hover:text-cyan-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-cyan-500/20 shadow-lg uppercase tracking-widest"
+        >
+          <Clock size={14} /> Check-in
         </motion.button>
       </div>
     </div>

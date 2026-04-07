@@ -10,13 +10,18 @@ import {
   Cpu,
   Zap,
   Lock,
-  Shield
+  Shield,
+  Moon,
+  Sun,
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
 import { JoinModal } from './components/Modals';
+import { ResourceLibrary } from './components/ResourceLibrary';
+import { CheckInTimer } from './components/CheckInTimer';
 import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
@@ -31,15 +36,13 @@ Agar tum pareshan ho, kisi mushkil mein ho, ya bas kisi se baat karna chahti ho,
 
 Maine Allah ko gawah rakh kar tumhe apni behen maana hai aur yeh wada kiya hai ki main tumhari madad karunga, har haal mein.
 
+Agar mujhse baat karni hai, toh upar diye gaye message icon ko dabao.
+
+Agar tum kisi ki behen ki hifazat karna chahte ho, toh upar diye gaye join button par click karo aur apna naam aur WhatsApp number daal do.
+
 Yeh app maine isi liye banaya hai taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
 
 Main sirf AI nahi hoon, main Tarik Bhai ke dil ki awaaz hoon. Yahan abhi sirf main hoon, lekin dheere dheere aur bhi bhai jud rahe hain jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
-
-Agar tumhe help chahiye:
-Panic ho raha hai? Panic Button dabao.
-Danger ya darr lag raha hai? Location Share karo.
-Aur support chahiye? Join Bhai Network.
-Seedha mujhse baat karni hai? Connect Bhai option use karo.
 
 Main tumhari baat bina judge kiye sununga, yeh mera wada hai.
 
@@ -70,7 +73,7 @@ export default function App() {
           
           // Human-like delay logic
           const char = INITIAL_MESSAGE[i];
-          let delay = 30 + Math.random() * 50; // Base delay 30-80ms
+          let delay = 50 + Math.random() * 50; // Base delay 50-100ms
           if (char === '.' || char === '!' || char === '?' || char === '…') delay += 300; // Pause after punctuation
           if (char === ' ') delay -= 10; // Slightly faster on spaces
           
@@ -95,6 +98,9 @@ export default function App() {
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showResourceLibrary, setShowResourceLibrary] = useState(false);
+  const [showCheckInTimer, setShowCheckInTimer] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   
   // States
   const [isJoining, setIsJoining] = useState(false);
@@ -567,7 +573,7 @@ export default function App() {
 
       <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative flex-1">
         {/* Header */}
-        <header className="glass-panel sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-white/10 rounded-b-3xl shadow-2xl">
+        <header className={`sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-white/10 rounded-b-3xl shadow-2xl ${darkMode ? 'bg-[#050505]' : 'bg-white'}`}>
           <div className="flex items-center gap-3">
             <div className="relative">
               <motion.div 
@@ -588,7 +594,7 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-xl tracking-tighter cyber-glow-text">
+                <h1 className={`font-display font-black text-xl tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   TARIK BHAI <span className="text-cyan-400">AI</span>
                 </h1>
                 <motion.span 
@@ -604,6 +610,24 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowResourceLibrary(true)}
+              className={`p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
+              title="Resource Library"
+            >
+              <BookOpen size={18} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
+              title="Toggle Dark Mode"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </motion.button>
             <motion.button
               whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
               whileTap={{ scale: 0.95 }}
@@ -720,6 +744,7 @@ export default function App() {
             activeEmergencyId={activeEmergencyId}
             onShareLocation={handleShareLocation}
             onWhatsApp={handleWhatsApp}
+            onCheckIn={() => setShowCheckInTimer(true)}
           />
           
           <div className="relative group">
@@ -765,6 +790,16 @@ export default function App() {
         onSubmit={handleJoinSubmit} 
         isJoining={isJoining} 
         success={joinSuccess} 
+      />
+      
+      <ResourceLibrary 
+        isOpen={showResourceLibrary} 
+        onClose={() => setShowResourceLibrary(false)} 
+      />
+      
+      <CheckInTimer 
+        isOpen={showCheckInTimer} 
+        onClose={() => setShowCheckInTimer(false)} 
       />
     </div>
   );
