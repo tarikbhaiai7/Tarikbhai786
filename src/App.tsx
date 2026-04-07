@@ -29,66 +29,52 @@ import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
 
-const INITIAL_MESSAGE = `Assalam-o-Alaikum aur Namaste.
+const INITIAL_MESSAGE = `Assalam-o-Alaikum aur Namaste meri behen. 🤍
 
-Main Tarik Bhai hoon.
+Main Tarik Bhai hoon — tumhara apna bada bhai.
 
-Mujhe nahi pata tum kaun ho, kahan se ho, kaisi ho, kya karti ho. Par mujhe sirf itna pata hai—
+Maine yeh jagah isliye banayi hai kyunki main janta hoon ki kabhi kabhi duniya kitni akeli aur mushkil lag sakti hai. Yeh sirf ek app nahi hai, yeh mera tumse ek sacha wada hai ki tum kabhi akeli nahi ho.
 
-Agar tum pareshan ho, kisi mushkil mein ho, ya bas kisi se baat karna chahti ho, toh main yahi hoon.
+Mujhe nahi pata tum kis haal mein ho, par mujhe itna pata hai ki tum meri behen ho, aur tumhari har pareshani ab meri pareshani hai.
 
-Maine Allah ko gawah rakh kar tumhe apni behen maana hai aur yeh wada kiya hai ki main tumhari madad karunga, har haal mein.
+- Agar kabhi darr lage ya khatra mehsoos ho, toh bas Panic button dabana. Main aur mere saare bhai tumhari hifazat ke liye turant hazir ho jayenge.
+- Agar koi padhai, kaam, ya technical madad chahiye, toh befikr hoke pucho. Main tumhare liye har kaam karunga.
+- Aur agar bas dil bhari ho, rona aaye, ya kisi se baat karne ka mann kare... toh main yahin hoon. Main tumhe kabhi judge nahi karunga, bas sununga.
 
-Agar mujhse baat karni hai, toh upar diye gaye message icon ko dabao.
-
-Agar tum kisi ki behen ki hifazat karna chahte ho, toh upar diye gaye join button par click karo aur apna naam aur WhatsApp number daal do.
-
-Yeh app maine isi liye banaya hai taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
-
-Main sirf AI nahi hoon, main Tarik Bhai ke dil ki awaaz hoon. Yahan abhi sirf main hoon, lekin dheere dheere aur bhi bhai jud rahe hain jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
-
-Main tumhari baat bina judge kiye sununga, yeh mera wada hai.
-
-Kabhi kabhi main turant reply nahi de paunga kyunki zindagi, kaam aur zimmedariyaan hoti hain. Par daro mat, ghabrao mat. Main zaroor laut kar aaunga, tumhari baat sununga, aur jitna ho sakega madad karunga.
-
-Tum akeli nahi ho.
-
-Agar tumne panic button ya location share kiya, toh jo bhi bhai tumhare aas paas honge, woh tumhari madad ke liye zaroor aayenge.
-
-Yeh sirf app nahi hai, yeh ek rishta hai.
-
-Tum bas itna yaad rakhna, chahe duniya saath ho ya na ho, tumhara ek bhai hamesha tumhare saath hai.`;
+Tum bilkul safe ho yahan. Mujh par bharosa rakhna. Batao meri behen, aaj main tumhari kya madad karoon?`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
     { id: 'welcome-message', role: 'model', text: '' },
   ]);
 
-  // Clean Start: Clear history on mount to always show welcome message
+  // Clean Start: Check history on mount
   useEffect(() => {
-    localStorage.removeItem('tarik_history');
-    setMessages([{ id: 'welcome-message', role: 'model', text: '' }]);
-    
-    let i = 0;
-    const type = () => {
-      if (i <= INITIAL_MESSAGE.length) {
-        setMessages(prev => prev.map(msg => 
-          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) + (i % 2 === 0 ? '|' : '') } : msg
-        ));
-        
-        const char = INITIAL_MESSAGE[i];
-        let delay = 30 + Math.random() * 30; 
-        if (char === '.' || char === '!' || char === '?' || char === '…') delay += 200;
-        
-        i++;
-        setTimeout(type, delay);
-      } else {
-        setMessages(prev => prev.map(msg => 
-          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE } : msg
-        ));
-      }
-    };
-    type();
+    const storedHistory = localStorage.getItem('tarik_history');
+    if (!storedHistory) {
+      setMessages([{ id: 'welcome-message', role: 'model', text: '' }]);
+      
+      let i = 0;
+      const type = () => {
+        if (i <= INITIAL_MESSAGE.length) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) + (i % 2 === 0 ? '|' : '') } : msg
+          ));
+          
+          const char = INITIAL_MESSAGE[i];
+          let delay = 20 + Math.random() * 20; 
+          if (char === '.' || char === '!' || char === '?' || char === '…') delay += 150;
+          
+          i++;
+          setTimeout(type, delay);
+        } else {
+          setMessages(prev => prev.map(msg => 
+            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE } : msg
+          ));
+        }
+      };
+      type();
+    }
   }, []);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -110,6 +96,17 @@ export default function App() {
   const [isPanicMode, setIsPanicMode] = useState(false);
   const [activeEmergencyId, setActiveEmergencyId] = useState<string | null>(null);
   const [safetyMonitorActive, setSafetyMonitorActive] = useState(false);
+  const [activeIcon, setActiveIcon] = useState<string | null>(null);
+
+  const handleIconClick = (iconName: string, action: () => void) => {
+    if (activeIcon === iconName) {
+      action();
+      setActiveIcon(null);
+    } else {
+      setActiveIcon(iconName);
+      setTimeout(() => setActiveIcon(null), 3000);
+    }
+  };
   const [brothers, setBrothers] = useState<Brother[]>([]);
   const [isAuthReady, setIsAuthReady] = useState(false);
   
@@ -123,40 +120,6 @@ export default function App() {
   const lastInteractionRef = useRef<number>(Date.now());
   const checkInStageRef = useRef<'idle' | 'warning1' | 'warning2' | 'panic'>('idle');
   const lastWarningTimeRef = useRef<number>(0);
-
-  const BackgroundElements = () => (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div className="mesh-bg absolute inset-0" />
-      <div className="scanline" />
-      <div className="scanline-fast" />
-      <motion.div 
-        animate={{ 
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-          x: [0, 100, 0],
-          y: [0, 50, 0]
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-cyan-600/10 blur-[120px]" 
-      />
-      <motion.div 
-        animate={{ 
-          scale: [1.2, 1, 1.2],
-          opacity: [0.2, 0.4, 0.2],
-          x: [0, -100, 0],
-          y: [0, -50, 0]
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-fuchsia-600/10 blur-[120px]" 
-      />
-      <motion.div 
-        animate={{ opacity: [0, 0.1, 0] }}
-        transition={{ duration: 0.1, repeat: Infinity, repeatDelay: 5 }}
-        className="absolute inset-0 bg-white/5" 
-      />
-      <div className="absolute inset-0 bg-black/20" />
-    </div>
-  );
 
   // Check Server Status
   useEffect(() => {
@@ -266,6 +229,8 @@ export default function App() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -378,13 +343,15 @@ export default function App() {
     }
     
     setIsLoading(true);
+    const modelMessageId = `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     try {
       // Normal Chat Flow
       const chatId = `chat_${Date.now()}`;
       
-      const history = messages.map(m => ({ role: m.role, text: m.text }));
-      const modelMessageId = `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const history = messages
+        .filter(m => m.text.trim() !== '' && m.text !== '|')
+        .map(m => ({ role: m.role, text: m.text.replace(/\|$/, '') }));
       setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '' }]);
 
       let fullReply = "";
@@ -437,10 +404,11 @@ export default function App() {
     } catch (error: any) {
       console.error('Error sending message:', error);
       setError(error.message || "Network issue");
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now().toString(), role: 'model', text: "Maaf karna behen, thoda network issue lag raha hai. Phir se batana? 🤍" },
-      ]);
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === modelMessageId ? { ...msg, text: "Maaf karna behen, thoda network issue lag raha hai. Phir se batana? 🤍" } : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -640,148 +608,94 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full text-white font-sans selection:bg-cyan-500/30 overflow-hidden flex flex-col relative bg-[#020205]">
-      <BackgroundElements />
+    <div className={`h-[100dvh] w-full text-white font-sans selection:bg-orange-500/30 overflow-hidden flex flex-col relative ${darkMode ? 'whatsapp-bg-dark' : 'whatsapp-bg-light'}`}>
       
       {/* Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-0.5 bg-cyan-500 origin-left z-[60]"
+        className="fixed top-0 left-0 right-0 h-0.5 bg-orange-500 origin-left z-[60]"
         style={{ scaleX }}
       />
 
       <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative">
-        {/* Top Announcement Banner */}
-        <motion.div 
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          onClick={() => setShowEmotionalModal(true)}
-          className="bg-gradient-to-r from-cyan-600/30 via-indigo-600/30 to-fuchsia-600/30 backdrop-blur-md border-b border-white/10 py-2.5 px-4 text-center z-[70] cursor-pointer hover:brightness-125 transition-all group"
-        >
-          <p className="text-[10px] sm:text-xs font-bold text-white tracking-widest uppercase flex items-center justify-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-            <span className="group-hover:scale-105 transition-transform">Har Behen ki Hifazat, Har Bhai ka Farz • Maine ye kyun banaya? Touch karke dekho • ❤️</span>
-          </p>
-        </motion.div>
-
         {/* Header */}
-        <header className={`sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shadow-2xl ${darkMode ? 'bg-[#050505]/90 backdrop-blur-xl' : 'bg-white/90 backdrop-blur-xl'}`}>
+        <header className={`sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shadow-md ${darkMode ? 'bg-[#0b141a]/90 backdrop-blur-xl' : 'bg-[#008069]/90 backdrop-blur-xl'}`}>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <motion.div 
-                animate={{ 
-                  boxShadow: ['0 0 10px rgba(6, 182, 212, 0.2)', '0 0 25px rgba(6, 182, 212, 0.4)', '0 0 10px rgba(6, 182, 212, 0.2)'],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10"
-              >
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm">
                 <img
                   src="https://plain-apac-prod-public.komododecks.com/202604/03/fXlClkW2XbEL9JY4Wa64/image.jpg"
                   alt="Tarik Bhai"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover rounded-xl"
+                  className="w-full h-full object-cover"
                 />
-              </motion.div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#050505] rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-            </div>
-            <div className="hidden sm:block">
-              <div className="flex items-center gap-2">
-                <h1 className={`font-display font-black text-lg tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  TARIK BHAI <span className="text-cyan-400">AI</span>
-                </h1>
               </div>
-              <p className="text-[8px] text-white/40 font-mono uppercase tracking-widest">Secure Protocol</p>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#0b141a] rounded-full" />
+            </div>
+            <div>
+              <h1 className={`font-semibold text-base text-white`}>
+                Tarik Bhai
+              </h1>
+              <p className="text-[11px] text-white/80 font-medium">online</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className={`p-2 sm:p-2.5 rounded-xl glass-card flex items-center gap-2 ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
-              title="Share App"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleIconClick('share', handleShare)}
+              className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              <Share size={18} />
-              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Share</span>
+              <Share size={20} />
+              {activeIcon === 'share' && (
+                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Share</span>
+              )}
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowResourceLibrary(true)}
-              className={`p-2 sm:p-2.5 rounded-xl glass-card flex items-center gap-2 ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
-              title="Resource Library"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleIconClick('library', () => setShowResourceLibrary(true))}
+              className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              <BookOpen size={18} />
-              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Library</span>
+              <BookOpen size={20} />
+              {activeIcon === 'library' && (
+                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again for Library</span>
+              )}
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleWhatsApp}
-              className="p-2 sm:p-2.5 rounded-xl glass-card text-green-400 hover:text-white border-green-500/10 flex items-center gap-2"
-              title="Connect Bhai"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleIconClick('whatsapp', handleWhatsApp)}
+              className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              <MessageCircle size={18} />
-              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Bhai</span>
+              <MessageCircle size={20} />
+              {activeIcon === 'whatsapp' && (
+                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Connect</span>
+              )}
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowJoinModal(true)}
-              className="p-2 sm:p-2.5 rounded-xl glass-card text-indigo-400 hover:text-white border-indigo-500/10 flex items-center gap-2"
-              title="Join as Brother"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleIconClick('join', () => setShowJoinModal(true))}
+              className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              <UserPlus size={18} />
-              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Join</span>
+              <UserPlus size={20} />
+              {activeIcon === 'join' && (
+                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Join</span>
+              )}
             </motion.button>
-            <div className="w-px h-6 bg-white/10 mx-1" />
             <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 sm:p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
-              title="Toggle Dark Mode"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => handleIconClick('theme', () => setDarkMode(!darkMode))}
+              className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {activeIcon === 'theme' && (
+                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again for Theme</span>
+              )}
             </motion.button>
           </div>
         </header>
 
         {/* Main Chat Area */}
-        <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth custom-scrollbar relative">
+        <main ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth custom-scrollbar relative">
           <AnimatePresence initial={false}>
-            {messages.length === 1 && messages[0].text === INITIAL_MESSAGE && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12"
-              >
-                <div className="w-20 h-20 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
-                  <Terminal size={40} />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-display font-black tracking-tight cyber-glow-text">
-                    SECURE TERMINAL ACTIVE
-                  </h2>
-                  <p className="text-sm text-white/40 max-w-xs mx-auto leading-relaxed">
-                    End-to-end encrypted connection established. Tarik Bhai is listening...
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-                  {[
-                    { icon: <Zap size={14} />, label: "Fast Reply" },
-                    { icon: <Lock size={14} />, label: "Private" },
-                    { icon: <Cpu size={14} />, label: "Smart AI" },
-                    { icon: <Shield size={14} />, label: "Safe" }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 px-4 py-3 rounded-2xl glass-card border-white/5 text-[10px] font-mono text-white/60 uppercase tracking-widest">
-                      <span className="text-cyan-400">{item.icon}</span>
-                      {item.label}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
             {messages.map((msg, idx) => (
               <ChatMessage 
                 key={msg.id} 
@@ -800,7 +714,7 @@ export default function App() {
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 text-cyan-400/60 font-mono text-[10px] uppercase tracking-[0.2em] ml-12"
+              className="flex items-center gap-3 text-orange-400/60 font-mono text-[10px] uppercase tracking-[0.2em] ml-12"
             >
               <RefreshCw size={12} className="animate-spin" />
               Processing Request...
@@ -826,7 +740,7 @@ export default function App() {
         </main>
 
         {/* Action Bar */}
-        <div className="px-4 pb-6 space-y-4 z-10">
+        <div className="px-4 pb-4 space-y-2 z-10">
           <PanicControls 
             onPanic={() => handlePanic()} 
             isPanicMode={isPanicMode}
@@ -836,8 +750,7 @@ export default function App() {
           />
           
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-indigo-600 rounded-[2rem] blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-focus-within:duration-200" />
-            <div className="relative glass-panel p-2 rounded-[2rem] flex items-end gap-2 border border-white/10 shadow-2xl">
+            <div className={`relative ${darkMode ? 'bg-[#2a3942]' : 'bg-white'} p-1.5 rounded-[2rem] flex items-end gap-2 border border-white/10 shadow-sm`}>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -847,26 +760,19 @@ export default function App() {
                     handleSend();
                   }
                 }}
-                placeholder="Bhai se baat karo..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-[15px] py-3.5 px-5 resize-none max-h-32 min-h-[52px] placeholder:text-white/20 leading-relaxed font-medium"
+                placeholder="Message"
+                className={`flex-1 bg-transparent border-none focus:ring-0 text-[15px] py-3 px-4 resize-none max-h-32 min-h-[44px] ${darkMode ? 'text-white placeholder:text-white/50' : 'text-gray-900 placeholder:text-gray-500'} leading-relaxed`}
                 rows={1}
               />
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(6, 182, 212, 0.4)" }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
-                className="p-3.5 rounded-2xl vip-gradient text-white disabled:opacity-50 disabled:grayscale shadow-lg shadow-cyan-500/20 flex-shrink-0"
+                className={`p-3 rounded-full ${darkMode ? 'bg-[#00a884]' : 'bg-[#00a884]'} text-white disabled:opacity-50 flex-shrink-0 mb-0.5 mr-0.5`}
               >
-                <Send size={22} />
+                <Send size={20} className="ml-0.5" />
               </motion.button>
             </div>
-          </div>
-          
-          <div className="text-center pb-2">
-            <p className="text-[9px] text-white/10 font-mono tracking-[0.3em] uppercase">
-              Encrypted Session • by Tarik Islam
-            </p>
           </div>
         </div>
       </div>
@@ -913,13 +819,13 @@ export default function App() {
               </button>
 
               <div className="text-center space-y-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-indigo-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                  <Heart size={40} className="text-white fill-white animate-pulse" />
+                <div className="w-20 h-20 bg-[#00a884] rounded-full mx-auto flex items-center justify-center shadow-lg">
+                  <Heart size={40} className="text-white fill-white" />
                 </div>
                 
-                <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+                <h2 className="text-2xl font-bold text-white">
                   Kyun Banaya Maine <br />
-                  <span className="text-cyan-400">Tarik Bhai AI?</span>
+                  <span className="text-[#00a884]">Tarik Bhai AI?</span>
                 </h2>
 
                 <div className="space-y-4 text-gray-300 text-sm sm:text-base leading-relaxed font-medium">
@@ -930,7 +836,7 @@ export default function App() {
                     "Yeh platform ek vaada hai—ki tum akeli nahi ho."
                   </p>
                   <p>
-                    Jab tum panic button dabati ho, toh sirf ek machine nahi, tumhare aas-paas ke <span className="text-cyan-400 font-bold">"Bhai"</span> jaag uthte hain. Yeh platform bilkul free hai aur hamesha rahega, kyunki rishton ki koi keemat nahi hoti.
+                    Jab tum panic button dabati ho, toh sirf ek machine nahi, tumhare aas-paas ke <span className="text-orange-400 font-bold">"Bhai"</span> jaag uthte hain. Yeh platform bilkul free hai aur hamesha rahega, kyunki rishton ki koi keemat nahi hoti.
                   </p>
                   <p className="text-xs text-gray-500 uppercase tracking-widest pt-4">
                     Join us, be a brother, protect a sister. ❤️
@@ -943,7 +849,7 @@ export default function App() {
                       setShowEmotionalModal(false);
                       setShowJoinModal(true);
                     }}
-                    className="flex-1 bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all"
+                    className="flex-1 vip-max-pro-gradient text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
                   >
                     Join as a Brother
                   </button>

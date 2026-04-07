@@ -15,8 +15,8 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
       id: 'defense',
       title: 'Self-Defense', 
       icon: Shield, 
-      color: 'text-cyan-400',
-      bg: 'bg-cyan-500/10',
+      color: 'text-orange-400',
+      bg: 'bg-orange-500/10',
       desc: 'Practical safety techniques and awareness.',
       content: [
         { title: 'Situational Awareness', text: 'Always be aware of your surroundings. Avoid using phones in isolated areas.' },
@@ -29,8 +29,8 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
       id: 'legal',
       title: 'Legal Rights', 
       icon: Scale, 
-      color: 'text-indigo-400',
-      bg: 'bg-indigo-500/10',
+      color: 'text-yellow-400',
+      bg: 'bg-yellow-500/10',
       desc: 'Know your rights under Indian Law.',
       content: [
         { title: 'Zero FIR', text: 'You can file an FIR at any police station, regardless of where the incident happened.' },
@@ -57,8 +57,8 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
       id: 'mental',
       title: 'Emotional Support', 
       icon: Heart, 
-      color: 'text-fuchsia-400',
-      bg: 'bg-fuchsia-500/10',
+      color: 'text-red-400',
+      bg: 'bg-red-500/10',
       desc: 'Coping with stress and trauma.',
       content: [
         { title: 'You are not alone', text: 'Healing takes time. Talking to someone you trust is the first step.' },
@@ -81,17 +81,17 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] w-full max-w-2xl max-h-[85vh] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col"
+            className="bg-[#0b141a] border border-white/10 rounded-[2rem] w-full max-w-2xl max-h-[85vh] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-indigo-600 to-fuchsia-500" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500" />
             
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+                <div className="w-10 h-10 rounded-xl bg-[#00a884]/10 flex items-center justify-center text-[#00a884] border border-[#00a884]/20">
                   <Book size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tighter">Safety Library</h2>
+                  <h2 className="text-xl font-bold text-white">Safety Library</h2>
                   <p className="text-[10px] text-white/30 font-mono uppercase tracking-widest">Knowledge is Protection</p>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
                         </div>
                         <h3 className="text-lg font-bold text-white mb-1">{cat.title}</h3>
                         <p className="text-xs text-gray-500 leading-relaxed">{cat.desc}</p>
-                        <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-cyan-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-[#00a884] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                           Explore <ChevronRight size={12} />
                         </div>
                       </motion.button>
@@ -165,7 +165,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
                         >
                           <div className="flex-grow">
                             <h4 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-[#00a884]" />
                               {item.title}
                             </h4>
                             <p className="text-xs text-gray-400 leading-relaxed">{(item as any).text}</p>
@@ -173,7 +173,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
                           {(item as any).link && (
                             <a 
                               href={(item as any).link} 
-                              className="ml-4 p-3 rounded-xl bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all shadow-lg shadow-cyan-500/10"
+                              className="ml-4 p-3 rounded-xl bg-[#00a884]/10 text-[#00a884] hover:bg-[#00a884] hover:text-white transition-all shadow-lg shadow-[#00a884]/10"
                             >
                               <ExternalLink size={16} />
                             </a>
@@ -187,7 +187,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ isOpen, onClos
             </div>
 
             <div className="p-6 bg-white/[0.02] border-t border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+              <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-400">
                 <Info size={16} />
               </div>
               <p className="text-[10px] text-gray-500 leading-tight">

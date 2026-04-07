@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => (
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className="bg-[#1a1025] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative"
+          className="bg-[#202c33] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative"
         >
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
             <X size={20} />
@@ -85,7 +85,7 @@ export const JoinModal: React.FC<JoinModalProps> = ({ isOpen, onClose, onSubmit,
           <button 
             type="submit" 
             disabled={isJoining}
-            className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:opacity-90 py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-[#00a884] hover:bg-[#008f70] py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white"
           >
             {isJoining ? 'Registering...' : <><UserPlus size={18} /> Join Now</>}
           </button>

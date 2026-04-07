@@ -39,12 +39,12 @@ export const CheckInTimer: React.FC<CheckInTimerProps> = ({ isOpen, onClose }) =
         </div>
         {!isActive ? (
           <div className="space-y-4">
-            <button onClick={() => { setSeconds(300); setIsActive(true); }} className="w-full bg-cyan-600 p-3 rounded-xl text-white font-bold">5 Minutes</button>
-            <button onClick={() => { setSeconds(1800); setIsActive(true); }} className="w-full bg-cyan-600 p-3 rounded-xl text-white font-bold">30 Minutes</button>
+            <button onClick={() => { setSeconds(300); setIsActive(true); }} className="w-full bg-orange-600 p-3 rounded-xl text-white font-bold">5 Minutes</button>
+            <button onClick={() => { setSeconds(1800); setIsActive(true); }} className="w-full bg-orange-600 p-3 rounded-xl text-white font-bold">30 Minutes</button>
           </div>
         ) : (
           <div className="text-center">
-            <Clock size={48} className="mx-auto text-cyan-400 mb-4" />
+            <Clock size={48} className="mx-auto text-orange-400 mb-4" />
             <div className="text-4xl font-bold text-white">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</div>
             <p className="text-gray-400 mt-2">Time remaining until alert</p>
           </div>

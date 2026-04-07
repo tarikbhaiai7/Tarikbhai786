@@ -123,22 +123,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-4xl bg-[#0a0a0f] border border-cyan-500/20 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.1)] flex flex-col max-h-[90vh] relative"
+        className="w-full max-w-4xl bg-[#0a0a0f] border border-orange-500/20 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(255,165,0,0.1)] flex flex-col max-h-[90vh] relative"
       >
         <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-cyan-500/10 flex items-center justify-between bg-cyan-500/5 relative z-10">
+        <div className="px-6 py-4 border-b border-orange-500/10 flex items-center justify-between bg-orange-500/5 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-            <h2 className="font-mono font-bold text-lg tracking-widest text-cyan-400 uppercase">Security_Console_v2.0</h2>
+            <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+            <h2 className="font-mono font-bold text-lg tracking-widest text-orange-400 uppercase">Security_Console_v2.0</h2>
             {token && (
-              <span className="text-[9px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30 uppercase tracking-[0.2em] font-bold">
+              <span className="text-[9px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30 uppercase tracking-[0.2em] font-bold">
                 ACCESS_GRANTED
               </span>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-cyan-400">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-orange-400">
             <X size={20} />
           </button>
         </div>
@@ -146,8 +146,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         {!token ? (
           /* Login Form */
           <div className="p-8 flex flex-col items-center justify-center flex-1">
-            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/20">
-              <Lock className="text-indigo-400" size={32} />
+            <div className="w-16 h-16 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20">
+              <Lock className="text-yellow-400" size={32} />
             </div>
             <h3 className="text-xl font-bold mb-2">Tarik Bhai Admin</h3>
             <p className="text-white/40 text-sm mb-8 text-center max-w-xs">
@@ -159,7 +159,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             <button 
               onClick={handleAccess}
               disabled={isLoading}
-              className="w-full max-w-sm bg-indigo-600 hover:bg-indigo-700 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+              className="w-full max-w-sm bg-yellow-600 hover:bg-yellow-700 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2"
             >
               {isLoading ? 'Accessing...' : 'Access System'}
             </button>
@@ -207,7 +207,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   {activeTab === 'stats' && stats && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="glass-card p-6 rounded-3xl border-white/10">
-                        <Users className="text-indigo-400 mb-4" size={24} />
+                        <Users className="text-yellow-400 mb-4" size={24} />
                         <div className="text-2xl font-bold">{stats.totalUsers}</div>
                         <div className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Total Sisters</div>
                       </div>
@@ -229,7 +229,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                       {users.map((u) => (
                         <div key={u.id} className="glass-card p-4 rounded-2xl border-white/5 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold">
+                            <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-400 font-bold">
                               {u.name[0]}
                             </div>
                             <div>
@@ -260,7 +260,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                         <div key={i} className="glass-card p-4 rounded-2xl border-white/5 space-y-3">
                           <div className="flex items-center justify-between border-b border-white/5 pb-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-indigo-400">{c.name}</span>
+                              <span className="text-xs font-bold text-yellow-400">{c.name}</span>
                               <span className="text-[10px] text-white/20">•</span>
                               <span className="text-[10px] text-white/40">{new Date(c.timestamp).toLocaleString()}</span>
                             </div>
@@ -273,11 +273,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                           </div>
                           <div className="space-y-2">
                             <div className="text-xs bg-white/5 p-2 rounded-lg border border-white/5">
-                              <span className="text-indigo-300/60 font-bold mr-2">Sister:</span>
+                              <span className="text-yellow-300/60 font-bold mr-2">Sister:</span>
                               {c.message}
                             </div>
-                            <div className="text-xs bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
-                              <span className="text-indigo-400 font-bold mr-2">Bhai:</span>
+                            <div className="text-xs bg-yellow-500/5 p-2 rounded-lg border border-yellow-500/10">
+                              <span className="text-yellow-400 font-bold mr-2">Bhai:</span>
                               {c.reply}
                             </div>
                           </div>

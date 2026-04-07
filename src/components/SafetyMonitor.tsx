@@ -21,11 +21,11 @@ export const SafetyMonitor: React.FC<SafetyMonitorProps> = ({
         onClick={onToggle}
         className={`flex items-center gap-2 px-4 py-2 rounded-full text-[9px] font-mono font-bold transition-all backdrop-blur-md border ${
           isActive 
-            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]' 
+            ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 shadow-[0_0_15px_rgba(255,165,0,0.2)]' 
             : 'bg-white/5 text-white/20 border-white/10 hover:bg-white/10'
         }`}
       >
-        {isActive ? <ShieldCheck size={14} className="text-cyan-400" /> : <ShieldAlert size={14} />}
+        {isActive ? <ShieldCheck size={14} className="text-orange-400" /> : <ShieldAlert size={14} />}
         <span className="tracking-[0.2em] uppercase">
           {isActive ? 'MONITOR: ACTIVE' : 'MONITOR: OFFLINE'}
         </span>

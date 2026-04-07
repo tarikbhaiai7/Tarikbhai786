@@ -44,11 +44,11 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
             exit={{ scale: 0.9, y: 20 }}
             className="bg-[#0a0a0a] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-indigo-600 to-fuchsia-500" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500" />
             
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-cyan-400 border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-orange-400 border border-white/10">
                   <Lock size={20} />
                 </div>
                 <h2 className="text-xl font-black text-white uppercase tracking-tighter">Admin Login</h2>
@@ -66,7 +66,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter Access Key"
-                  className={`w-full bg-white/5 border ${error ? 'border-red-500/50' : 'border-white/10'} p-4 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-mono`}
+                  className={`w-full bg-white/5 border ${error ? 'border-red-500/50' : 'border-white/10'} p-4 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-mono`}
                 />
                 {error && (
                   <motion.div 
@@ -83,7 +83,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full bg-gradient-to-br from-cyan-500 to-indigo-600 p-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full vip-max-pro-gradient p-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
               >
                 {isLoading ? (

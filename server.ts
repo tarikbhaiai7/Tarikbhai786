@@ -18,10 +18,10 @@ async function startServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Rate Limiting
+  // Rate Limiting (Removed for VIP Max Pro experience)
   const chatLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 15,
+    max: 10000, // Effectively no limit
     message: { error: "Behen, thoda aaram se. 1 minute baad try karna 🤍" }
   });
 
