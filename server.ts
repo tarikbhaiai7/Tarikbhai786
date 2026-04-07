@@ -12,7 +12,7 @@ import { sendToTelegram } from "./src/server/telegram.ts";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   app.set('trust proxy', 1);
   app.use(express.json());
@@ -27,24 +27,24 @@ async function startServer() {
 
   // --- API ROUTES ---
 
-  app.get("/api/health", (req, res) => {
+  app.get("/api/health", async (req, res) => {
     res.json({ 
       status: "ok", 
       time: new Date().toISOString(),
-      users: db.users.size,
-      activeEmergencies: db.emergencies.filter(e => e.status === 'active').length
+      users: await db.getUserCount(),
+      activeEmergencies: await db.getActiveEmergencyCount()
     });
   });
 
   // Register User
-  app.post("/api/register", (req, res) => {
+  app.post("/api/register", async (req, res) => {
     const { name } = req.body;
     if (!name || name.trim() === "") return res.status(400).json({ error: "Name is required" });
 
     const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const ip = req.ip || req.headers['x-forwarded-for'] || "unknown";
     
-    db.users.set(userId, {
+    await db.setUser(userId, {
       id: userId,
       name: name.trim(),
       ip: ip as string,
@@ -66,7 +66,7 @@ async function startServer() {
         return res.status(400).json({ error: "Message too long" });
       }
 
-      const user = db.users.get(userId);
+      const user = await db.getUser(userId);
       const name = user ? user.name : "Unknown Sister";
       const ip = user ? user.ip : (req.ip || "unknown");
 
@@ -76,7 +76,7 @@ async function startServer() {
       const timestamp = new Date().toISOString();
       
       // Save to DB
-      db.chats.push({
+      await db.addChat({
         userId: userId || "unknown",
         name,
         message,
@@ -105,12 +105,12 @@ async function startServer() {
   app.post("/api/chat/log", async (req, res) => {
     try {
       const { userId, message, reply } = req.body;
-      const user = db.users.get(userId);
+      const user = await db.getUser(userId);
       const name = user ? user.name : "Unknown Sister";
       const ip = user ? user.ip : (req.ip || "unknown");
       const timestamp = new Date().toISOString();
 
-      db.chats.push({
+      await db.addChat({
         userId: userId || "unknown",
         name,
         message,
@@ -137,9 +137,9 @@ async function startServer() {
   app.post("/api/panic-alert", async (req, res) => {
     try {
       const { userId, location, mapsLink } = req.body;
-      const user = db.users.get(userId);
+      const user = await db.getUser(userId);
       
-      db.emergencies.push({
+      await db.addEmergency({
         userId: userId || "unknown",
         location: location || "Unknown Location",
         timestamp: new Date().toISOString(),
@@ -169,14 +169,9 @@ async function startServer() {
       return res.status(400).json({ error: "Missing location data" });
     }
 
-    const userLocations = db.locations.get(userId) || [];
-    userLocations.push({ lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
-    
-    if (userLocations.length > 100) userLocations.shift();
-    
-    db.locations.set(userId, userLocations);
+    await db.addLocation(userId, { lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
 
-    const hasActiveEmergency = db.emergencies.some(e => e.userId === userId && e.status === 'active');
+    const hasActiveEmergency = await db.hasActiveEmergency(userId);
     if (hasActiveEmergency) {
       await sendToTelegram({
         type: "LOCATION_UPDATE",
@@ -214,24 +209,21 @@ async function startServer() {
     }
   };
 
-  app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
+  app.get("/api/admin/stats", authenticateAdmin, async (req, res) => {
     res.json({
-      totalUsers: db.users.size,
-      totalChats: db.chats.length,
-      totalEmergencies: db.emergencies.length
+      totalUsers: await db.getUserCount(),
+      totalChats: (await db.getChats(1000)).length,
+      totalEmergencies: (await db.getAllEmergencies(1000)).length
     });
   });
 
-  app.get("/api/admin/locations", authenticateAdmin, (req, res) => {
-    const allLocations: any = {};
-    for (const [userId, locations] of db.locations.entries()) {
-      allLocations[userId] = locations;
-    }
+  app.get("/api/admin/locations", authenticateAdmin, async (req, res) => {
+    const allLocations = await db.getAllUserLocations();
     res.json(allLocations);
   });
 
-  app.get("/api/admin/emergencies", authenticateAdmin, (req, res) => {
-    res.json(db.emergencies.slice(-50).reverse());
+  app.get("/api/admin/emergencies", authenticateAdmin, async (req, res) => {
+    res.json(await db.getAllEmergencies(50));
   });
 
   // --- STATIC FILES & VITE ---
@@ -259,7 +251,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

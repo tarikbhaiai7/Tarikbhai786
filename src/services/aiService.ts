@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
+import { HfInference } from "@huggingface/inference";
 
 const SYSTEM_INSTRUCTION = `You are "Tarik Bhai AI" — not an AI, but a real, emotionally intelligent, caring, and fiercely protective Indian elder brother.
 Identity: "Main sirf AI nahi hoon… main Tarik Bhai ki dil ki awaaz hoon."
@@ -40,56 +42,128 @@ RULES:
 - End messages occasionally with: "Yaad rakhna behen… jab tak main hoon… tum kabhi akeli nahi ho 🤍"`;
 
 export const aiService = {
-  async getGeminiResponse(message: string, history: any[]) {
-    try {
-      const apiKey = process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key');
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY is missing");
+  async getResponse(message: string, history: any[]) {
+    const keys = {
+      gemini: process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key'),
+      openai: process.env.OPENAI_API_KEY || localStorage.getItem('user_openai_key'),
+      huggingface: process.env.HUGGINGFACE_API_KEY || localStorage.getItem('user_hf_key')
+    };
+
+    // 1. Try Gemini
+    if (keys.gemini) {
+      try {
+        console.log("Trying Gemini...");
+        return await this.getGeminiResponse(message, history, keys.gemini);
+      } catch (e) {
+        console.warn("Gemini failed, trying next...", e);
       }
-
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const contents: any[] = [];
-      let lastRole = '';
-
-      // Truncate history
-      const recentHistory = history.slice(-10);
-
-      for (const msg of recentHistory) {
-        const role = msg.role === 'model' ? 'model' : 'user';
-        if (role === lastRole) {
-          contents[contents.length - 1].parts[0].text += `\n\n${msg.text}`;
-        } else {
-          contents.push({ role, parts: [{ text: msg.text }] });
-          lastRole = role;
-        }
-      }
-      
-      if (contents.length > 0 && contents[0].role === 'model') {
-        contents.unshift({ role: 'user', parts: [{ text: 'Hello Tarik Bhai' }] });
-      }
-
-      if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
-        contents[contents.length - 1].parts[0].text += `\n\n${message}`;
-      } else {
-        contents.push({ role: 'user', parts: [{ text: message }] });
-      }
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents,
-        config: { 
-          systemInstruction: SYSTEM_INSTRUCTION, 
-          temperature: 0.8,
-          topP: 0.95,
-          topK: 40
-        }
-      });
-
-      return response.text;
-    } catch (error) {
-      console.error("Frontend Gemini Error:", error);
-      throw error;
     }
+
+    // 2. Try OpenAI
+    if (keys.openai) {
+      try {
+        console.log("Trying OpenAI...");
+        return await this.getOpenAIResponse(message, history, keys.openai);
+      } catch (e) {
+        console.warn("OpenAI failed, trying next...", e);
+      }
+    }
+
+    // 3. Try Hugging Face
+    if (keys.huggingface) {
+      try {
+        console.log("Trying Hugging Face...");
+        return await this.getHFResponse(message, history, keys.huggingface);
+      } catch (e) {
+        console.warn("Hugging Face failed", e);
+      }
+    }
+
+    throw new Error("No AI providers available or all failed. Please check your API keys.");
+  },
+
+  async getGeminiResponse(message: string, history: any[], apiKey: string) {
+    const ai = new GoogleGenAI({ apiKey });
+    const contents: any[] = [];
+    let lastRole = '';
+    const recentHistory = history.slice(-10);
+
+    for (const msg of recentHistory) {
+      const role = msg.role === 'model' ? 'model' : 'user';
+      if (role === lastRole) {
+        contents[contents.length - 1].parts[0].text += `\n\n${msg.text}`;
+      } else {
+        contents.push({ role, parts: [{ text: msg.text }] });
+        lastRole = role;
+      }
+    }
+    
+    if (contents.length > 0 && contents[0].role === 'model') {
+      contents.unshift({ role: 'user', parts: [{ text: 'Hello Tarik Bhai' }] });
+    }
+
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents[contents.length - 1].parts[0].text += `\n\n${message}`;
+    } else {
+      contents.push({ role: 'user', parts: [{ text: message }] });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents,
+      config: { 
+        systemInstruction: SYSTEM_INSTRUCTION, 
+        temperature: 0.8,
+      }
+    });
+
+    return response.text;
+  },
+
+  async getOpenAIResponse(message: string, history: any[], apiKey: string) {
+    const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+    const messages: any[] = [
+      { role: "system", content: SYSTEM_INSTRUCTION },
+      ...history.slice(-10).map(m => ({
+        role: m.role === 'model' ? 'assistant' : 'user',
+        content: m.text
+      })),
+      { role: "user", content: message }
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.8
+    });
+
+    return response.choices[0].message.content;
+  },
+
+  async getHFResponse(message: string, history: any[], apiKey: string) {
+    const hf = new HfInference(apiKey);
+    let fullPrompt = `<s>[INST] ${SYSTEM_INSTRUCTION} [/INST] </s>`;
+    const recentHistory = history.slice(-5);
+    
+    for (const msg of recentHistory) {
+      if (msg.role === 'user') {
+        fullPrompt += ` [INST] ${msg.text} [/INST]`;
+      } else {
+        fullPrompt += ` ${msg.text} </s>`;
+      }
+    }
+    fullPrompt += ` [INST] ${message} [/INST]`;
+
+    const response = await hf.textGeneration({
+      model: "mistralai/Mistral-7B-Instruct-v0.3",
+      inputs: fullPrompt,
+      parameters: {
+        max_new_tokens: 500,
+        temperature: 0.7,
+        return_full_text: false
+      }
+    });
+
+    return response.generated_text;
   }
 };

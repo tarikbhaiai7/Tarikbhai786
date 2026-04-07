@@ -118,10 +118,13 @@ export default function App() {
       return () => unsubscribe();
     }, []);
 
-  // Check for API Key
+  // Check for API Keys
   useEffect(() => {
-    const key = process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key');
-    if (!key) {
+    const gemini = process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key');
+    const openai = process.env.OPENAI_API_KEY || localStorage.getItem('user_openai_key');
+    const hf = process.env.HUGGINGFACE_API_KEY || localStorage.getItem('user_hf_key');
+    
+    if (!gemini && !openai && !hf) {
       setShowApiKeyModal(true);
     }
   }, []);
@@ -309,7 +312,7 @@ export default function App() {
       let aiReply = "";
       
       try {
-        aiReply = await aiService.getGeminiResponse(userText, history);
+        aiReply = await aiService.getResponse(userText, history);
         
         // Save Chat to Firestore (Try-catch to handle permission errors if not authed)
         try {
@@ -639,8 +642,10 @@ export default function App() {
       
       <ApiKeyModal 
         isOpen={showApiKeyModal} 
-        onSave={(key) => {
-          localStorage.setItem('user_gemini_key', key);
+        onSave={(keys) => {
+          if (keys.gemini) localStorage.setItem('user_gemini_key', keys.gemini);
+          if (keys.openai) localStorage.setItem('user_openai_key', keys.openai);
+          if (keys.huggingface) localStorage.setItem('user_hf_key', keys.huggingface);
           setShowApiKeyModal(false);
         }} 
       />

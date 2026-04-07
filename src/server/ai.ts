@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
+import { HfInference } from "@huggingface/inference";
 import "dotenv/config";
 
 const SYSTEM_INSTRUCTION = `You are "Tarik Bhai AI" — not an AI, but a real, emotionally intelligent, caring, and fiercely protective Indian elder brother.
@@ -45,19 +47,25 @@ RULES:
 
 const AI_PROVIDERS = [
   { 
+    name: "gemini", 
+    apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY, 
+    model: "gemini-3-flash-preview" 
+  },
+  { 
     name: "openai", 
     apiKey: process.env.OPENAI_API_KEY, 
     model: "gpt-4o-mini" 
   },
-  { 
-    name: "gemini", 
-    apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY, 
-    model: "gemini-3-flash-preview" 
+  {
+    name: "huggingface",
+    apiKey: process.env.HF_API_KEY_1 || process.env.HF_API_KEY_2 || process.env.HUGGINGFACE_API_KEY,
+    model: "mistralai/Mistral-7B-Instruct-v0.3"
   }
 ].filter(p => p.apiKey && p.apiKey.trim() !== "");
 
 async function fetchOpenAI(prompt: string, history: any[], apiKey: string, model: string) {
-  const messages = [
+  const openai = new OpenAI({ apiKey });
+  const messages: any[] = [
     { role: "system", content: SYSTEM_INSTRUCTION },
     ...history.slice(-10).map((msg: any) => ({ 
       role: msg.role === 'model' ? 'assistant' : 'user', 
@@ -66,18 +74,43 @@ async function fetchOpenAI(prompt: string, history: any[], apiKey: string, model
     { role: "user", content: prompt }
   ];
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json', 
-      'Authorization': `Bearer ${apiKey}` 
-    },
-    body: JSON.stringify({ model, messages, temperature: 0.7 })
+  const response = await openai.chat.completions.create({
+    model,
+    messages,
+    temperature: 0.7,
   });
   
-  if (!response.ok) throw new Error(`OpenAI Error: ${response.status}`);
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return response.choices[0].message.content;
+}
+
+async function fetchHuggingFace(prompt: string, history: any[], apiKey: string, model: string) {
+  const hf = new HfInference(apiKey);
+  
+  // Format for Mistral/Llama style
+  let fullPrompt = `<s>[INST] ${SYSTEM_INSTRUCTION} [/INST] </s>`;
+  const recentHistory = history.slice(-5);
+  
+  for (const msg of recentHistory) {
+    if (msg.role === 'user') {
+      fullPrompt += ` [INST] ${msg.text} [/INST]`;
+    } else {
+      fullPrompt += ` ${msg.text} </s>`;
+    }
+  }
+  
+  fullPrompt += ` [INST] ${prompt} [/INST]`;
+
+  const response = await hf.textGeneration({
+    model,
+    inputs: fullPrompt,
+    parameters: {
+      max_new_tokens: 500,
+      temperature: 0.7,
+      return_full_text: false
+    }
+  });
+
+  return response.generated_text;
 }
 
 async function fetchGemini(prompt: string, history: any[], apiKey: string, model: string) {
@@ -132,6 +165,8 @@ export async function getAIResponse(message: string, history: any[]) {
         responseText = await fetchOpenAI(message, history, provider.apiKey!, provider.model);
       } else if (provider.name === 'gemini') {
         responseText = await fetchGemini(message, history, provider.apiKey!, provider.model);
+      } else if (provider.name === 'huggingface') {
+        responseText = await fetchHuggingFace(message, history, provider.apiKey!, provider.model);
       }
 
       if (responseText && responseText.length > 2) {
