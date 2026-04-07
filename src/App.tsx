@@ -184,11 +184,12 @@ export default function App() {
       try {
         const parsed = JSON.parse(storedHistory);
         if (parsed && parsed.length > 0) {
-          // Ensure welcome message is always first
-          if (parsed[0].id !== 'welcome-message') {
-            setMessages([{ id: 'welcome-message', role: 'model', text: INITIAL_MESSAGE }, ...parsed]);
+          // Filter out legacy ID '1' and ensure welcome message is always first
+          const sanitizedParsed = parsed.filter((m: Message) => m.id !== '1');
+          if (sanitizedParsed.length === 0 || sanitizedParsed[0].id !== 'welcome-message') {
+            setMessages([{ id: 'welcome-message', role: 'model', text: INITIAL_MESSAGE }, ...sanitizedParsed]);
           } else {
-            setMessages(parsed);
+            setMessages(sanitizedParsed);
           }
         }
       } catch (e) {}
