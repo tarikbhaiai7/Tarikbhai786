@@ -16,7 +16,7 @@ import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
-import { JoinModal, AdminLoginModal } from './components/Modals';
+import { JoinModal } from './components/Modals';
 import { AdminPanel } from './components/AdminPanel';
 import { Message, Brother } from './types/index';
 import { api } from './services/api';
@@ -106,7 +106,6 @@ export default function App() {
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   
   // States
@@ -751,7 +750,7 @@ export default function App() {
             </div>
             {/* Admin Trigger - Visible Hacking Indicator */}
             <motion.button 
-              onClick={() => setShowAdminLoginModal(true)}
+              onClick={() => setShowAdminModal(true)}
               animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="absolute bottom-0 right-0 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)] z-50 cursor-pointer"
@@ -776,15 +775,6 @@ export default function App() {
         success={joinSuccess} 
       />
       
-      <AdminLoginModal 
-        isOpen={showAdminLoginModal} 
-        onClose={() => setShowAdminLoginModal(false)}
-        onAdminLogin={() => {
-          setShowAdminLoginModal(false);
-          setShowAdminModal(true);
-        }}
-      />
-
       <AdminPanel 
         isOpen={showAdminModal} 
         onClose={() => setShowAdminModal(false)} 
