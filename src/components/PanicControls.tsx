@@ -7,15 +7,13 @@ interface PanicControlsProps {
   onPanic: () => void;
   onShareLocation: () => void;
   onWhatsApp: () => void;
-  onCheckIn: () => void;
 }
 
 export const PanicControls: React.FC<PanicControlsProps> = ({ 
   isPanicMode, 
   onPanic, 
   onShareLocation, 
-  onWhatsApp,
-  onCheckIn
+  onWhatsApp
 }) => {
   return (
     <div className="flex flex-col px-1 pt-2 pb-1 gap-3">
@@ -68,14 +66,6 @@ export const PanicControls: React.FC<PanicControlsProps> = ({
           className="flex items-center justify-center gap-2 py-3.5 glass-card text-red-400 hover:text-red-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-red-500/20 shadow-lg uppercase tracking-widest"
         >
           <Phone size={14} /> Call Emergency
-        </motion.button>
-        <motion.button 
-          whileHover={{ scale: 1.02, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onCheckIn}
-          className="flex items-center justify-center gap-2 py-3.5 glass-card text-cyan-400 hover:text-cyan-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-cyan-500/20 shadow-lg uppercase tracking-widest"
-        >
-          <Clock size={14} /> Check-in
         </motion.button>
       </div>
     </div>

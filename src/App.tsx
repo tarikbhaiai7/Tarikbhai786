@@ -21,7 +21,7 @@ import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
 import { JoinModal } from './components/Modals';
 import { ResourceLibrary } from './components/ResourceLibrary';
-import { CheckInTimer } from './components/CheckInTimer';
+import { AdminLoginModal } from './components/AdminLoginModal';
 import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
@@ -99,7 +99,7 @@ export default function App() {
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showResourceLibrary, setShowResourceLibrary] = useState(false);
-  const [showCheckInTimer, setShowCheckInTimer] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   
   // States
@@ -266,8 +266,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages, isLoading]);
 
   // --- LIVE TRACKING SYSTEM ---
   useEffect(() => {
@@ -562,7 +565,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen text-white font-sans selection:bg-cyan-500/30 overflow-hidden flex flex-col relative">
+    <div className="h-screen w-full text-white font-sans selection:bg-cyan-500/30 overflow-hidden flex flex-col relative bg-[#020205]">
       <BackgroundElements />
       
       {/* Progress Bar */}
@@ -571,9 +574,9 @@ export default function App() {
         style={{ scaleX }}
       />
 
-      <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative flex-1">
+      <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative">
         {/* Header */}
-        <header className={`sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-white/10 rounded-b-3xl shadow-2xl ${darkMode ? 'bg-[#050505]' : 'bg-white'}`}>
+        <header className={`sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shadow-2xl ${darkMode ? 'bg-[#050505]/90 backdrop-blur-xl' : 'bg-white/90 backdrop-blur-xl'}`}>
           <div className="flex items-center gap-3">
             <div className="relative">
               <motion.div 
@@ -581,79 +584,67 @@ export default function App() {
                   boxShadow: ['0 0 10px rgba(6, 182, 212, 0.2)', '0 0 25px rgba(6, 182, 212, 0.4)', '0 0 10px rgba(6, 182, 212, 0.2)'],
                 }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10"
               >
                 <img
                   src="https://plain-apac-prod-public.komododecks.com/202604/03/fXlClkW2XbEL9JY4Wa64/image.jpg"
                   alt="Tarik Bhai"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </motion.div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#050505] rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#050505] rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <div className="flex items-center gap-2">
-                <h1 className={`font-display font-black text-xl tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className={`font-display font-black text-lg tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   TARIK BHAI <span className="text-cyan-400">AI</span>
                 </h1>
-                <motion.span 
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[8px] font-mono border border-cyan-500/20 uppercase tracking-widest"
-                >
-                  v2.5-PRO
-                </motion.span>
               </div>
-              <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">System: Online • Secure Protocol</p>
+              <p className="text-[8px] text-white/40 font-mono uppercase tracking-widest">Secure Protocol</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <motion.button
               whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowResourceLibrary(true)}
-              className={`p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
+              className={`p-2 sm:p-2.5 rounded-xl glass-card flex items-center gap-2 ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
               title="Resource Library"
             >
               <BookOpen size={18} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
-              title="Toggle Dark Mode"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShareApp}
-              className="p-2.5 rounded-xl glass-card text-cyan-400 hover:text-white border-cyan-500/10"
-              title="Share App"
-            >
-              <Share2 size={18} />
+              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Library</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
               whileTap={{ scale: 0.95 }}
               onClick={handleWhatsApp}
-              className="p-2.5 rounded-xl glass-card text-green-400 hover:text-white border-green-500/10"
+              className="p-2 sm:p-2.5 rounded-xl glass-card text-green-400 hover:text-white border-green-500/10 flex items-center gap-2"
               title="Connect Bhai"
             >
               <MessageCircle size={18} />
+              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Bhai</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowJoinModal(true)}
-              className="p-2.5 rounded-xl glass-card text-indigo-400 hover:text-white border-indigo-500/10"
+              className="p-2 sm:p-2.5 rounded-xl glass-card text-indigo-400 hover:text-white border-indigo-500/10 flex items-center gap-2"
               title="Join as Brother"
             >
               <UserPlus size={18} />
+              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Join</span>
+            </motion.button>
+            <div className="w-px h-6 bg-white/10 mx-1" />
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 sm:p-2.5 rounded-xl glass-card ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
+              title="Toggle Dark Mode"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
           </div>
         </header>
@@ -744,7 +735,6 @@ export default function App() {
             activeEmergencyId={activeEmergencyId}
             onShareLocation={handleShareLocation}
             onWhatsApp={handleWhatsApp}
-            onCheckIn={() => setShowCheckInTimer(true)}
           />
           
           <div className="relative group">
@@ -797,9 +787,20 @@ export default function App() {
         onClose={() => setShowResourceLibrary(false)} 
       />
       
-      <CheckInTimer 
-        isOpen={showCheckInTimer} 
-        onClose={() => setShowCheckInTimer(false)} 
+      <AdminLoginModal 
+        isOpen={showAdminLogin} 
+        onClose={() => setShowAdminLogin(false)} 
+      />
+      
+      <motion.button 
+        onClick={() => setShowAdminLogin(true)}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.1, 0.3, 0.1],
+          boxShadow: ['0 0 0px rgba(239, 68, 68, 0)', '0 0 10px rgba(239, 68, 68, 0.5)', '0 0 0px rgba(239, 68, 68, 0)']
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+        className="fixed bottom-4 left-4 w-2 h-2 rounded-full bg-red-500 z-[100] cursor-default"
       />
     </div>
   );

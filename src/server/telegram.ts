@@ -3,7 +3,13 @@ import "dotenv/config";
 export async function sendToTelegram(data: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  
+  if (!token || !chatId) {
+    console.warn("Telegram Bot: Missing token or chat ID. Logging skipped.");
+    return;
+  }
+
+  console.log(`Telegram Bot: Sending ${data.type || 'CHAT'} log...`);
 
   let text = "";
   if (data.type === "EMERGENCY") {

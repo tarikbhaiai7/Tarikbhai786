@@ -22,42 +22,123 @@
         </div>
     </div>
 
-    <div id="dashboard-screen" class="hidden min-h-screen p-6">
-        <header class="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
-            <h1 class="text-3xl font-bold text-[#FFD700]">Tarik Bhai AI - Live Dashboard</h1>
-            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-medium transition-colors">Logout</button>
+    <div id="dashboard-screen" class="hidden min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-700 pb-6">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl font-black text-[#FFD700] tracking-tighter uppercase">Tarik Bhai AI</h1>
+                <p class="text-gray-400 text-xs font-mono uppercase tracking-[0.3em] mt-1">Command Center • v2.5-PRO</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="fetchData()" class="bg-gray-800 hover:bg-gray-700 p-2.5 rounded-xl border border-white/10 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                </button>
+                <button onclick="logout()" class="bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-6 py-2.5 rounded-xl font-bold border border-red-500/20 transition-all uppercase text-xs tracking-widest">Logout</button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                <h3 class="text-gray-400 text-sm font-medium uppercase tracking-wider">Total Users</h3>
-                <p id="stat-users" class="text-4xl font-bold mt-2 text-blue-400">0</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-2xl border border-white/5 shadow-xl">
+                <h3 class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">Users</h3>
+                <p id="stat-users" class="text-3xl font-black mt-1 text-blue-400">0</p>
             </div>
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                <h3 class="text-gray-400 text-sm font-medium uppercase tracking-wider">Total Chats</h3>
-                <p id="stat-chats" class="text-4xl font-bold mt-2 text-green-400">0</p>
+            <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-2xl border border-white/5 shadow-xl">
+                <h3 class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">Chats</h3>
+                <p id="stat-chats" class="text-3xl font-black mt-1 text-green-400">0</p>
             </div>
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-red-900/50 border-red-500/30">
-                <h3 class="text-red-400 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                    Active Emergencies
+            <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-2xl border border-white/5 shadow-xl">
+                <h3 class="text-gray-500 text-[10px] font-mono uppercase tracking-widest">Brothers</h3>
+                <p id="stat-brothers" class="text-3xl font-black mt-1 text-indigo-400">0</p>
+            </div>
+            <div class="bg-red-500/5 backdrop-blur-xl p-6 rounded-2xl border border-red-500/20 shadow-xl">
+                <h3 class="text-red-500/60 text-[10px] font-mono uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                    Alerts
                 </h3>
-                <p id="stat-emergencies" class="text-4xl font-bold mt-2 text-red-500">0</p>
+                <p id="stat-emergencies" class="text-3xl font-black mt-1 text-red-500">0</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-white flex items-center gap-2">
-                    Live Map Tracking
-                </h2>
-                <div id="map" class="flex-grow"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Map Section -->
+            <div class="lg:col-span-2 bg-gray-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex flex-col min-h-[500px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-black text-white uppercase tracking-tighter">Live Tracking</h2>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-mono uppercase border border-cyan-500/20">Active</span>
+                    </div>
+                </div>
+                <div id="map" class="flex-grow rounded-2xl overflow-hidden border border-white/10"></div>
             </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-white">Recent Emergencies</h2>
-                <div class="overflow-y-auto max-h-[400px] pr-2 custom-scrollbar space-y-4" id="emergencies-list">
-                    <!-- Emergencies will be populated here -->
+            <!-- Side Panels -->
+            <div class="space-y-6">
+                <!-- Emergencies -->
+                <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-3xl border border-red-500/10 shadow-2xl overflow-hidden">
+                    <button onclick="toggleSection('emergencies-content')" class="w-full flex justify-between items-center mb-4 group">
+                        <h2 class="text-lg font-black text-red-400 uppercase tracking-tighter">Recent Alerts</h2>
+                        <svg id="emergencies-icon" class="text-gray-500 group-hover:text-white transition-transform transform rotate-180" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div id="emergencies-content" class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div id="emergencies-list" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- Brothers -->
+                <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-3xl border border-indigo-500/10 shadow-2xl overflow-hidden">
+                    <button onclick="toggleSection('brothers-content')" class="w-full flex justify-between items-center mb-4 group">
+                        <h2 class="text-lg font-black text-indigo-400 uppercase tracking-tighter">Registered Brothers</h2>
+                        <svg id="brothers-icon" class="text-gray-500 group-hover:text-white transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div id="brothers-content" class="hidden space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div id="brothers-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Width Sections -->
+        <div class="space-y-6">
+            <!-- Recent Chats -->
+            <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl overflow-hidden">
+                <button onclick="toggleSection('chats-content')" class="w-full flex justify-between items-center mb-6 group">
+                    <h2 class="text-xl font-black text-white uppercase tracking-tighter">Recent Logs</h2>
+                    <svg id="chats-icon" class="text-gray-500 group-hover:text-white transition-transform" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="chats-content" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-[10px] font-mono uppercase tracking-widest border-b border-white/5">
+                                <th class="pb-4 px-4">Time</th>
+                                <th class="pb-4 px-4">User</th>
+                                <th class="pb-4 px-4">Message</th>
+                                <th class="pb-4 px-4">Reply</th>
+                                <th class="pb-4 px-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chats-list" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users List -->
+            <div class="bg-gray-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl overflow-hidden">
+                <button onclick="toggleSection('users-content')" class="w-full flex justify-between items-center mb-6 group">
+                    <h2 class="text-xl font-black text-white uppercase tracking-tighter">Registered Users</h2>
+                    <svg id="users-icon" class="text-gray-500 group-hover:text-white transition-transform" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="users-content" class="hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-[10px] font-mono uppercase tracking-widest border-b border-white/5">
+                                <th class="pb-4 px-4">Joined</th>
+                                <th class="pb-4 px-4">ID</th>
+                                <th class="pb-4 px-4">Name</th>
+                                <th class="pb-4 px-4">IP</th>
+                                <th class="pb-4 px-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list" class="text-sm"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -71,6 +152,20 @@
 
         if (token) {
             showDashboard();
+        }
+
+        function toggleSection(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id.replace('-content', '-icon'));
+            const isHidden = el.classList.contains('hidden');
+            
+            if (isHidden) {
+                el.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
         }
 
         async function login() {
@@ -111,14 +206,14 @@
                 initMap();
                 fetchData();
             }, 100);
-            setInterval(fetchData, 5000); // Poll every 5 seconds
+            setInterval(fetchData, 10000); // Poll every 10 seconds
         }
 
         function initMap() {
             if (!map) {
-                map = L.map('map').setView([20.5937, 78.9629], 5); // Center of India
+                map = L.map('map').setView([20.5937, 78.9629], 5);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    attribution: '&copy; CARTO',
                     subdomains: 'abcd',
                     maxZoom: 20
                 }).addTo(map);
@@ -127,14 +222,30 @@
             }
         }
 
+        async function deleteItem(type, id) {
+            if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+            try {
+                const res = await fetch(`/api/admin/${type}s/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) fetchData();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         async function fetchData() {
             if (!token) return;
 
             try {
-                const [statsRes, emergenciesRes, locationsRes] = await Promise.all([
+                const [statsRes, emergenciesRes, locationsRes, chatsRes, usersRes, brothersRes] = await Promise.all([
                     fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch('/api/admin/emergencies', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('/api/admin/locations', { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch('/api/admin/locations', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/admin/chats', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/brothers')
                 ]);
 
                 if (statsRes.status === 401) return logout();
@@ -142,23 +253,78 @@
                 const stats = await statsRes.json();
                 const emergencies = await emergenciesRes.json();
                 const locations = await locationsRes.json();
+                const chats = await chatsRes.json();
+                const users = await usersRes.json();
+                const brothers = await brothersRes.json();
 
                 // Update Stats
                 document.getElementById('stat-users').innerText = stats.totalUsers;
                 document.getElementById('stat-chats').innerText = stats.totalChats;
                 document.getElementById('stat-emergencies').innerText = stats.totalEmergencies;
+                document.getElementById('stat-brothers').innerText = brothers.length;
 
                 // Update Emergencies List
                 const emergenciesList = document.getElementById('emergencies-list');
                 emergenciesList.innerHTML = emergencies.map(e => `
-                    <div class="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
+                    <div class="bg-red-500/5 border border-red-500/20 p-4 rounded-2xl">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-red-400">User ID: ${e.userId.substring(0, 8)}...</span>
-                            <span class="text-xs text-gray-400">${new Date(e.timestamp).toLocaleString()}</span>
+                            <span class="font-bold text-red-400 text-xs">ID: ${e.userId.substring(0, 8)}</span>
+                            <span class="text-[10px] text-gray-500 font-mono">${new Date(e.timestamp).toLocaleTimeString()}</span>
                         </div>
-                        <p class="text-sm text-gray-300 mb-2">${e.location}</p>
-                        <a href="${e.mapsLink || '#'}" target="_blank" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded inline-block transition-colors">View on Maps</a>
+                        <p class="text-xs text-gray-400 mb-3 line-clamp-2">${e.location}</p>
+                        <div class="flex gap-2">
+                            <a href="${e.mapsLink || '#'}" target="_blank" class="flex-1 text-center text-[10px] bg-red-600 hover:bg-red-500 text-white py-2 rounded-xl font-bold transition-all uppercase tracking-widest">Maps</a>
+                            <button onclick="deleteItem('emergencie', '${e.id}')" class="p-2 bg-gray-800 hover:bg-red-600/20 text-gray-500 hover:text-red-400 rounded-xl transition-all border border-white/5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </button>
+                        </div>
                     </div>
+                `).join('') || '<p class="text-center text-gray-600 py-8 text-xs italic">No active alerts</p>';
+
+                // Update Brothers List
+                const brothersList = document.getElementById('brothers-list');
+                brothersList.innerHTML = brothers.map(b => `
+                    <div class="bg-white/5 border border-white/5 p-3 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-bold text-white">${b.name}</p>
+                            <p class="text-[10px] text-gray-500 font-mono">${b.whatsappNumber}</p>
+                        </div>
+                        <a href="https://wa.me/${b.whatsappNumber}" target="_blank" class="p-2 bg-green-500/10 text-green-400 rounded-xl hover:bg-green-500 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        </a>
+                    </div>
+                `).join('') || '<p class="text-center text-gray-600 py-8 text-xs italic">No brothers registered</p>';
+
+                // Update Chats List
+                const chatsList = document.getElementById('chats-list');
+                chatsList.innerHTML = chats.map(c => `
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                        <td class="py-4 px-4 text-[10px] text-gray-500 font-mono">${new Date(c.timestamp).toLocaleString()}</td>
+                        <td class="py-4 px-4 font-bold text-cyan-400">${c.name}</td>
+                        <td class="py-4 px-4 text-gray-400 max-w-xs truncate">${c.message}</td>
+                        <td class="py-4 px-4 text-gray-500 max-w-xs truncate">${c.reply}</td>
+                        <td class="py-4 px-4">
+                            <button onclick="deleteItem('chat', '${c.timestamp}')" class="text-gray-600 hover:text-red-400 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Update Users List
+                const usersList = document.getElementById('users-list');
+                usersList.innerHTML = users.map(u => `
+                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                        <td class="py-4 px-4 text-[10px] text-gray-500 font-mono">${new Date(u.createdAt).toLocaleDateString()}</td>
+                        <td class="py-4 px-4 text-xs font-mono text-gray-400">${u.id.substring(0, 12)}...</td>
+                        <td class="py-4 px-4 font-bold text-white">${u.name}</td>
+                        <td class="py-4 px-4 text-[10px] text-gray-600 font-mono">${u.ip}</td>
+                        <td class="py-4 px-4">
+                            <button onclick="deleteItem('user', '${u.id}')" class="text-gray-600 hover:text-red-400 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </td>
+                    </tr>
                 `).join('');
 
                 // Update Map
@@ -179,10 +345,9 @@
                 const latestLoc = userLocs[userLocs.length - 1];
                 const isDanger = activeEmergencyUserIds.has(userId);
                 
-                const color = isDanger ? 'red' : '#3b82f6';
-                const fillColor = isDanger ? '#ef4444' : '#60a5fa';
+                const color = isDanger ? '#ef4444' : '#06b6d4';
+                const fillColor = isDanger ? '#ef4444' : '#06b6d4';
 
-                // Update or create marker
                 if (markers[userId]) {
                     markers[userId].setLatLng([latestLoc.lat, latestLoc.lng]);
                     markers[userId].setStyle({ color, fillColor });
@@ -196,14 +361,13 @@
                     }).addTo(map).bindPopup(`User: ${userId}`);
                 }
 
-                // Update or create polyline (movement path)
                 const latlngs = userLocs.map(loc => [loc.lat, loc.lng]);
                 if (polylines[userId]) {
                     polylines[userId].setLatLngs(latlngs);
-                    polylines[userId].setStyle({ color: isDanger ? 'red' : '#3b82f6' });
+                    polylines[userId].setStyle({ color });
                 } else {
                     polylines[userId] = L.polyline(latlngs, {
-                        color: isDanger ? 'red' : '#3b82f6',
+                        color: color,
                         weight: 3,
                         opacity: 0.5,
                         dashArray: '5, 10'

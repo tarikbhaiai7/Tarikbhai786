@@ -44,7 +44,7 @@ RULES:
 
 export const aiService = {
   async *getResponseStream(message: string, history: any[]) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) return;
 
     try {
@@ -92,7 +92,7 @@ export const aiService = {
   },
 
   async getResponse(message: string, history: any[]) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
 
     try {
