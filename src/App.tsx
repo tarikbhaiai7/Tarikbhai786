@@ -95,7 +95,7 @@ Tumhara ek bhai hamesha tumhare saath hai.`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'model', text: INITIAL_MESSAGE },
+    { id: 'welcome-message', role: 'model', text: INITIAL_MESSAGE },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -184,7 +184,12 @@ export default function App() {
       try {
         const parsed = JSON.parse(storedHistory);
         if (parsed && parsed.length > 0) {
-          setMessages(parsed);
+          // Ensure welcome message is always first
+          if (parsed[0].id !== 'welcome-message') {
+            setMessages([{ id: 'welcome-message', role: 'model', text: INITIAL_MESSAGE }, ...parsed]);
+          } else {
+            setMessages(parsed);
+          }
         }
       } catch (e) {}
     }
