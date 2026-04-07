@@ -13,7 +13,10 @@ import {
   Shield,
   Moon,
   Sun,
-  BookOpen
+  BookOpen,
+  Share,
+  Heart,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { ChatMessage } from './components/ChatMessage';
@@ -61,33 +64,31 @@ export default function App() {
     { id: 'welcome-message', role: 'model', text: '' },
   ]);
 
+  // Clean Start: Clear history on mount to always show welcome message
   useEffect(() => {
-    const storedHistory = localStorage.getItem('tarik_history');
-    if (!storedHistory) {
-      let i = 0;
-      const type = () => {
-        if (i <= INITIAL_MESSAGE.length) {
-          setMessages(prev => prev.map(msg => 
-            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) + (i % 2 === 0 ? '|' : '') } : msg
-          ));
-          
-          // Human-like delay logic
-          const char = INITIAL_MESSAGE[i];
-          let delay = 50 + Math.random() * 50; // Base delay 50-100ms
-          if (char === '.' || char === '!' || char === '?' || char === '…') delay += 300; // Pause after punctuation
-          if (char === ' ') delay -= 10; // Slightly faster on spaces
-          
-          i++;
-          setTimeout(type, delay);
-        } else {
-          // Final state: remove cursor
-          setMessages(prev => prev.map(msg => 
-            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE } : msg
-          ));
-        }
-      };
-      type();
-    }
+    localStorage.removeItem('tarik_history');
+    setMessages([{ id: 'welcome-message', role: 'model', text: '' }]);
+    
+    let i = 0;
+    const type = () => {
+      if (i <= INITIAL_MESSAGE.length) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) + (i % 2 === 0 ? '|' : '') } : msg
+        ));
+        
+        const char = INITIAL_MESSAGE[i];
+        let delay = 30 + Math.random() * 30; 
+        if (char === '.' || char === '!' || char === '?' || char === '…') delay += 200;
+        
+        i++;
+        setTimeout(type, delay);
+      } else {
+        setMessages(prev => prev.map(msg => 
+          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE } : msg
+        ));
+      }
+    };
+    type();
   }, []);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +101,7 @@ export default function App() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showResourceLibrary, setShowResourceLibrary] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showEmotionalModal, setShowEmotionalModal] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   
   // States
@@ -445,6 +447,16 @@ export default function App() {
   };
 
   const handlePanic = async (triggerSource?: string) => {
+    if (isPanicMode) {
+      setIsPanicMode(false);
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        role: 'model', 
+        text: '✅ EMERGENCY PROTOCOL DEACTIVATED. You are safe now, behen. 🤍' 
+      }]);
+      return;
+    }
+
     setIsPanicMode(true);
     setMessages(prev => [...prev, { 
       id: Date.now().toString(), 
@@ -472,6 +484,24 @@ export default function App() {
       try {
         const data = await api.panic(userId || 'unknown', locationText, mapsLink);
         if (data.emergencyId) setActiveEmergencyId(data.emergencyId);
+        
+        // Alert Brothers via WhatsApp Broadcast Simulation
+        const brothersList = await api.getBrothers();
+        if (brothersList && brothersList.length > 0) {
+          const alertMsg = `🚨 ALERT SENT TO ${brothersList.length} BROTHERS 🚨\n\nThey have been notified of your situation and location. Help is on the way.`;
+          setMessages(prev => [...prev, { 
+            id: `alert-${Date.now()}`, 
+            role: 'model', 
+            text: alertMsg 
+          }]);
+
+          // Open WhatsApp for the first brother as a primary contact
+          const firstBrother = brothersList[0];
+          const waText = encodeURIComponent(`🚨 EMERGENCY ALERT 🚨\n\nI am in danger! My location: ${mapsLink}\n\nPlease help me immediately!`);
+          setTimeout(() => {
+            window.open(`https://wa.me/${firstBrother.whatsappNumber}?text=${waText}`, '_blank');
+          }, 1000);
+        }
       } catch (panicError) {
         console.error("Backend panic alert failed", panicError);
       }
@@ -542,12 +572,57 @@ export default function App() {
   };
 
   const handleWhatsApp = async () => {
-    const targetNumber = "918984473230"; // Updated WhatsApp number
-    const time = new Date().toLocaleTimeString();
-    const text = encodeURIComponent(`Bhai mujhe help chahiye.\nName: ${userName || 'Unknown'}\nIssue: I need to talk.\nTime: ${time}`);
-    window.open(`https://wa.me/${targetNumber}?text=${text}`, "_blank");
+    try {
+      const brothersList = await api.getBrothers();
+      let locationMsg = "";
+      
+      if ("geolocation" in navigator) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          locationMsg = `\nMy Location: https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+        } catch (e) {}
+      }
+
+      const text = encodeURIComponent(`🚨 EMERGENCY HELP 🚨\n\nBhai, mujhe aapki madad chahiye.${locationMsg}\n\nName: ${userName || 'Sister'}`);
+      
+      if (brothersList && brothersList.length > 0) {
+        // Open WhatsApp for the first brother
+        const firstBrother = brothersList[0];
+        window.open(`https://wa.me/${firstBrother.whatsappNumber}?text=${text}`, "_blank");
+        
+        setMessages(prev => [...prev, { 
+          id: `wa-alert-${Date.now()}`, 
+          role: 'model', 
+          text: `🚨 Alerting ${brothersList.length} registered brothers via WhatsApp protocol... 🤍` 
+        }]);
+      } else {
+        // Fallback to primary support
+        window.open(`https://wa.me/918984473230?text=${text}`, "_blank");
+      }
+    } catch (error) {
+      window.open(`https://wa.me/918984473230?text=HELP!`, "_blank");
+    }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Tarik Bhai AI - Safety for Sisters',
+      text: 'Har behen ki hifazat, har bhai ka farz. Maine Tarik Bhai AI banaya hai taaki koi behen akeli na ho. Join us and protect our sisters. ❤️',
+      url: window.location.href
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard! Share it with your friends and family.');
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+    }
+  };
   const handleJoinSubmit = async (name: string, phone: string) => {
     setIsJoining(true);
     try {
@@ -575,6 +650,19 @@ export default function App() {
       />
 
       <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative">
+        {/* Top Announcement Banner */}
+        <motion.div 
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          onClick={() => setShowEmotionalModal(true)}
+          className="bg-gradient-to-r from-cyan-600/30 via-indigo-600/30 to-fuchsia-600/30 backdrop-blur-md border-b border-white/10 py-2.5 px-4 text-center z-[70] cursor-pointer hover:brightness-125 transition-all group"
+        >
+          <p className="text-[10px] sm:text-xs font-bold text-white tracking-widest uppercase flex items-center justify-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            <span className="group-hover:scale-105 transition-transform">Har Behen ki Hifazat, Har Bhai ka Farz • Maine ye kyun banaya? Touch karke dekho • ❤️</span>
+          </p>
+        </motion.div>
+
         {/* Header */}
         <header className={`sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shadow-2xl ${darkMode ? 'bg-[#050505]/90 backdrop-blur-xl' : 'bg-white/90 backdrop-blur-xl'}`}>
           <div className="flex items-center gap-3">
@@ -606,6 +694,16 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-1.5 sm:gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShare}
+              className={`p-2 sm:p-2.5 rounded-xl glass-card flex items-center gap-2 ${darkMode ? 'text-cyan-400 border-cyan-500/10' : 'text-gray-600 border-gray-200'} hover:text-white`}
+              title="Share App"
+            >
+              <Share size={18} />
+              <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-widest">Share</span>
+            </motion.button>
             <motion.button
               whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
               whileTap={{ scale: 0.95 }}
@@ -791,6 +889,76 @@ export default function App() {
         isOpen={showAdminLogin} 
         onClose={() => setShowAdminLogin(false)} 
       />
+
+      {/* Emotional Message Modal */}
+      <AnimatePresence>
+        {showEmotionalModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-gradient-to-b from-gray-900 to-black border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg shadow-[0_0_50px_rgba(6,182,212,0.2)] relative"
+            >
+              <button 
+                onClick={() => setShowEmotionalModal(false)}
+                className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-full transition-colors text-gray-500 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-indigo-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                  <Heart size={40} className="text-white fill-white animate-pulse" />
+                </div>
+                
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+                  Kyun Banaya Maine <br />
+                  <span className="text-cyan-400">Tarik Bhai AI?</span>
+                </h2>
+
+                <div className="space-y-4 text-gray-300 text-sm sm:text-base leading-relaxed font-medium">
+                  <p>
+                    Maine yeh platform isliye banaya kyunki har behen ka haq hai mehfooz rehne ka. Aaj ke waqt mein, jab hum bahar nikalte hain, darr hamesha saath rehta hai. Par ab nahi.
+                  </p>
+                  <p className="text-white font-bold italic">
+                    "Yeh platform ek vaada hai—ki tum akeli nahi ho."
+                  </p>
+                  <p>
+                    Jab tum panic button dabati ho, toh sirf ek machine nahi, tumhare aas-paas ke <span className="text-cyan-400 font-bold">"Bhai"</span> jaag uthte hain. Yeh platform bilkul free hai aur hamesha rahega, kyunki rishton ki koi keemat nahi hoti.
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-widest pt-4">
+                    Join us, be a brother, protect a sister. ❤️
+                  </p>
+                </div>
+
+                <div className="pt-6 flex flex-col sm:flex-row gap-4">
+                  <button 
+                    onClick={() => {
+                      setShowEmotionalModal(false);
+                      setShowJoinModal(true);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 hover:scale-105 transition-all"
+                  >
+                    Join as a Brother
+                  </button>
+                  <button 
+                    onClick={handleShare}
+                    className="flex-1 bg-white/5 border border-white/10 text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Share size={16} /> Share Now
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <motion.button 
         onClick={() => setShowAdminLogin(true)}

@@ -4,14 +4,13 @@ import { Search, Copy, Trash2, RefreshCw } from 'lucide-react';
 import { Message, Brother } from '../types';
 
 interface ChatMessageProps {
-  msg: Message;
+  msg: Message & { brothers?: Brother[] };
   isLast?: boolean;
   onDelete?: (id: string) => void;
   onRegenerate?: () => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ msg, isLast, onDelete, onRegenerate }) => {
-  const [brotherSearchQuery, setBrotherSearchQuery] = useState('');
   const [showCopied, setShowCopied] = useState(false);
   const isModel = msg.role === 'model';
   
@@ -125,6 +124,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ msg, isLast, onDelete,
         
         {msg.isPanicAlert && (
           <div className="mt-5 space-y-3">
+            {msg.brothers && msg.brothers.length > 0 && (
+              <div className="mb-4 p-3 bg-white/5 rounded-xl border border-white/10">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 mb-2">Brothers Notified:</p>
+                <div className="flex flex-wrap gap-2">
+                  {msg.brothers.map((b, i) => (
+                    <div key={i} className="px-2 py-1 bg-white/5 rounded-lg text-[10px] font-bold text-white/70 border border-white/5">
+                      {b.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <motion.a 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -136,7 +147,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ msg, isLast, onDelete,
             <motion.a 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              href={`sms:9999999999?body=${encodeURIComponent('HELP! My location: ' + (msg.mapsLink || ''))}`} 
+              href={`sms:918984473230?body=${encodeURIComponent('HELP! My location: ' + (msg.mapsLink || ''))}`} 
               className="flex items-center justify-center gap-3 w-full p-3.5 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all"
             >
               📩 Send Emergency SMS

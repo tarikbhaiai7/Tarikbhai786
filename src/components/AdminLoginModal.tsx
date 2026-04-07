@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, X, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -10,15 +11,21 @@ interface AdminLoginModalProps {
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e?: React.FormEvent) => {
+  const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (password === 'Tarik@786') {
+    setIsLoading(true);
+    try {
+      const token = await api.adminLogin('Tarik', password);
+      localStorage.setItem('admin_token', token);
       window.location.href = '/admin';
       onClose();
-    } else {
+    } catch (err) {
       setError(true);
       setTimeout(() => setError(false), 2000);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,9 +83,15 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full bg-gradient-to-br from-cyan-500 to-indigo-600 p-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-br from-cyan-500 to-indigo-600 p-4 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
-                <ShieldCheck size={18} /> Authenticate
+                {isLoading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <ShieldCheck size={18} />
+                )}
+                {isLoading ? 'Authenticating...' : 'Authenticate'}
               </motion.button>
             </form>
 

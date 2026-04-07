@@ -18,10 +18,9 @@ export const PanicControls: React.FC<PanicControlsProps> = ({
   return (
     <div className="flex flex-col px-1 pt-2 pb-1 gap-3">
       <motion.button 
-        whileHover={!isPanicMode ? { scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.15)' } : {}}
-        whileTap={!isPanicMode ? { scale: 0.98 } : {}}
+        whileHover={{ scale: 1.02, backgroundColor: isPanicMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(239, 68, 68, 0.15)' }}
+        whileTap={{ scale: 0.98 }}
         onClick={onPanic}
-        disabled={isPanicMode}
         className={`w-full flex items-center justify-center gap-3 py-4 transition-all rounded-2xl text-base sm:text-lg font-black border-2 relative overflow-hidden ${
           isPanicMode 
             ? 'bg-red-600 text-white border-red-400 animate-pulse shadow-[0_0_40px_rgba(220,38,38,0.8)]' 
@@ -38,7 +37,7 @@ export const PanicControls: React.FC<PanicControlsProps> = ({
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
         <AlertTriangle size={24} className={isPanicMode ? 'animate-bounce' : 'relative z-10'} /> 
         <span className="tracking-[0.2em] uppercase relative z-10 font-mono">
-          {isPanicMode ? 'SYSTEM ALERT: EMERGENCY' : 'INITIATE PANIC PROTOCOL'}
+          {isPanicMode ? 'STOP EMERGENCY PROTOCOL' : 'INITIATE PANIC PROTOCOL'}
         </span>
       </motion.button>
       
