@@ -58,10 +58,10 @@ const AI_PROVIDERS = [
   },
   {
     name: "huggingface",
-    apiKey: process.env.HF_API_KEY_1 || process.env.HF_API_KEY_2 || process.env.HUGGINGFACE_API_KEY,
+    apiKey: process.env.HUGGINGFACE_API_KEY || process.env.HF_API_KEY_1 || process.env.HF_API_KEY_2,
     model: "mistralai/Mistral-7B-Instruct-v0.3"
   }
-].filter(p => p.apiKey && p.apiKey.trim() !== "");
+].filter(p => p.apiKey && p.apiKey.trim() !== "" && !p.apiKey.includes("YOUR_"));
 
 async function fetchOpenAI(prompt: string, history: any[], apiKey: string, model: string) {
   const openai = new OpenAI({ apiKey });
@@ -152,7 +152,8 @@ async function fetchGemini(prompt: string, history: any[], apiKey: string, model
 
 export async function getAIResponse(message: string, history: any[]) {
   if (AI_PROVIDERS.length === 0) {
-    return "Behen, main abhi thoda busy hoon. Par tum tension mat lo, main yahin hoon. 🤍";
+    console.error("[AI] No API keys configured on backend!");
+    return "Behen, main abhi thoda busy hoon (Backend configuration missing). Par tum tension mat lo, main yahin hoon. 🤍";
   }
 
   // Try providers in sequence

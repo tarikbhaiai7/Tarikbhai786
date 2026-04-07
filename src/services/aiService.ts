@@ -44,9 +44,9 @@ RULES:
 export const aiService = {
   async getResponse(message: string, history: any[]) {
     const keys = {
-      gemini: process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key'),
-      openai: process.env.OPENAI_API_KEY || localStorage.getItem('user_openai_key'),
-      huggingface: process.env.HUGGINGFACE_API_KEY || localStorage.getItem('user_hf_key')
+      gemini: localStorage.getItem('user_gemini_key'),
+      openai: localStorage.getItem('user_openai_key'),
+      huggingface: localStorage.getItem('user_hf_key')
     };
 
     // 1. Try Gemini

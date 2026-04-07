@@ -97,21 +97,29 @@ export const JoinModal: React.FC<JoinModalProps> = ({ isOpen, onClose, onSubmit,
 
 interface ApiKeyModalProps {
   isOpen: boolean;
+  isAiConfigured?: boolean;
   onSave: (keys: { gemini?: string; openai?: string; huggingface?: string }) => void;
+  onClose?: () => void;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave }) => {
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, isAiConfigured, onSave, onClose }) => {
   const [gemini, setGemini] = React.useState(localStorage.getItem('user_gemini_key') || '');
   const [openai, setOpenai] = React.useState(localStorage.getItem('user_openai_key') || '');
   const [huggingface, setHuggingface] = React.useState(localStorage.getItem('user_hf_key') || '');
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {}} title="AI API Keys Configuration">
+    <Modal isOpen={isOpen} onClose={onClose || (() => {})} title="AI API Keys Configuration">
       <div className="space-y-4">
         <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 mb-2">
           <Key size={24} />
         </div>
         <p className="text-sm text-gray-400">AI se baat karne ke liye kam se kam ek API key chahiye. Yeh keys sirf aapke browser mein save hongi.</p>
+        
+        {isAiConfigured && (
+          <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl text-[11px] text-green-400">
+            Backend is already configured! You can skip this or add your own keys for faster response.
+          </div>
+        )}
         
         <div className="space-y-2">
           <label className="text-xs text-gray-500 font-medium">Gemini API Key (Recommended)</label>

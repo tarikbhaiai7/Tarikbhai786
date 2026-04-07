@@ -28,30 +28,42 @@ async function startServer() {
   // --- API ROUTES ---
 
   app.get("/api/health", async (req, res) => {
-    res.json({ 
-      status: "ok", 
-      time: new Date().toISOString(),
-      users: await db.getUserCount(),
-      activeEmergencies: await db.getActiveEmergencyCount()
-    });
+    try {
+      const aiConfigured = !!(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.HF_API_KEY_1 || process.env.HUGGINGFACE_API_KEY);
+      res.json({ 
+        status: "ok", 
+        time: new Date().toISOString(),
+        users: await db.getUserCount(),
+        activeEmergencies: await db.getActiveEmergencyCount(),
+        aiConfigured
+      });
+    } catch (e) {
+      console.error("Health check error:", e);
+      res.status(500).json({ status: "error", message: "Internal server error" });
+    }
   });
 
   // Register User
   app.post("/api/register", async (req, res) => {
-    const { name } = req.body;
-    if (!name || name.trim() === "") return res.status(400).json({ error: "Name is required" });
+    try {
+      const { name } = req.body;
+      if (!name || name.trim() === "") return res.status(400).json({ error: "Name is required" });
 
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const ip = req.ip || req.headers['x-forwarded-for'] || "unknown";
-    
-    await db.setUser(userId, {
-      id: userId,
-      name: name.trim(),
-      ip: ip as string,
-      createdAt: new Date().toISOString()
-    });
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const ip = req.ip || req.headers['x-forwarded-for'] || "unknown";
+      
+      await db.setUser(userId, {
+        id: userId,
+        name: name.trim(),
+        ip: ip as string,
+        createdAt: new Date().toISOString()
+      });
 
-    res.json({ userId, name: name.trim() });
+      res.json({ userId, name: name.trim() });
+    } catch (e) {
+      console.error("Register Error:", e);
+      res.status(500).json({ error: "Registration failed" });
+    }
   });
 
   // Chat API
@@ -164,25 +176,30 @@ async function startServer() {
 
   // Location Tracking
   app.post("/api/location", async (req, res) => {
-    const { userId, latitude, longitude } = req.body;
-    if (!userId || latitude === undefined || longitude === undefined) {
-      return res.status(400).json({ error: "Missing location data" });
+    try {
+      const { userId, latitude, longitude } = req.body;
+      if (!userId || latitude === undefined || longitude === undefined) {
+        return res.status(400).json({ error: "Missing location data" });
+      }
+
+      await db.addLocation(userId, { lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
+
+      const hasActiveEmergency = await db.hasActiveEmergency(userId);
+      if (hasActiveEmergency) {
+        await sendToTelegram({
+          type: "LOCATION_UPDATE",
+          userId,
+          location: `Lat: ${latitude}, Lng: ${longitude}`,
+          mapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.json({ success: true });
+    } catch (e) {
+      console.error("Location Error:", e);
+      res.status(500).json({ error: "Location update failed" });
     }
-
-    await db.addLocation(userId, { lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
-
-    const hasActiveEmergency = await db.hasActiveEmergency(userId);
-    if (hasActiveEmergency) {
-      await sendToTelegram({
-        type: "LOCATION_UPDATE",
-        userId,
-        location: `Lat: ${latitude}, Lng: ${longitude}`,
-        mapsLink: `https://www.google.com/maps?q=${latitude},${longitude}`,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    res.json({ success: true });
   });
 
   // --- ADMIN API ROUTES ---

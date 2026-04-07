@@ -31,6 +31,7 @@ export default function App() {
   const [userName, setUserName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isServerOnline, setIsServerOnline] = useState(true);
+  const [isAiConfigured, setIsAiConfigured] = useState(false);
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -55,9 +56,12 @@ export default function App() {
     const checkHealth = async () => {
       try {
         const res = await fetch('/api/health');
+        const data = await res.json();
         setIsServerOnline(res.ok);
+        setIsAiConfigured(!!data.aiConfigured);
       } catch (e) {
         setIsServerOnline(false);
+        setIsAiConfigured(false);
       }
     };
     checkHealth();
@@ -120,14 +124,20 @@ export default function App() {
 
   // Check for API Keys
   useEffect(() => {
-    const gemini = process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key');
-    const openai = process.env.OPENAI_API_KEY || localStorage.getItem('user_openai_key');
-    const hf = process.env.HUGGINGFACE_API_KEY || localStorage.getItem('user_hf_key');
+    // Only show modal if NO local keys AND backend says it's NOT configured
+    const gemini = localStorage.getItem('user_gemini_key');
+    const openai = localStorage.getItem('user_openai_key');
+    const hf = localStorage.getItem('user_hf_key');
     
-    if (!gemini && !openai && !hf) {
-      setShowApiKeyModal(true);
-    }
-  }, []);
+    // Wait a bit for health check to complete
+    const timer = setTimeout(() => {
+      if (!gemini && !openai && !hf && !isAiConfigured) {
+        setShowApiKeyModal(true);
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [isAiConfigured]);
 
   // Fetch Brothers
   useEffect(() => {
@@ -642,6 +652,8 @@ export default function App() {
       
       <ApiKeyModal 
         isOpen={showApiKeyModal} 
+        isAiConfigured={isAiConfigured}
+        onClose={() => setShowApiKeyModal(false)}
         onSave={(keys) => {
           if (keys.gemini) localStorage.setItem('user_gemini_key', keys.gemini);
           if (keys.openai) localStorage.setItem('user_openai_key', keys.openai);
