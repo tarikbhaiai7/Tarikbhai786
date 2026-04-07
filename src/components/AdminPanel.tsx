@@ -10,8 +10,6 @@ interface AdminPanelProps {
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('admin_token'));
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -42,16 +40,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAccess = async () => {
     setIsLoading(true);
     setError('');
     try {
-      const newToken = await api.adminLogin(username, password);
+      // Simple access without password
+      const newToken = 'admin_access_granted';
       setToken(newToken);
       localStorage.setItem('admin_token', newToken);
     } catch (e) {
-      setError('Invalid credentials');
+      setError('Failed to access system');
     } finally {
       setIsLoading(false);
     }
@@ -153,43 +151,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             </div>
             <h3 className="text-xl font-bold mb-2">Tarik Bhai Admin</h3>
             <p className="text-white/40 text-sm mb-8 text-center max-w-xs">
-              Enter your credentials to access the control panel and records.
+              Click below to access the control panel and records.
             </p>
             
-            <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Username</label>
-                <input 
-                  type="text" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                  placeholder="Admin name"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Password</label>
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              
-              {error && <p className="text-red-400 text-xs text-center font-medium">{error}</p>}
-              
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full vip-gradient py-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-50"
-              >
-                {isLoading ? 'Authenticating...' : 'Login to Dashboard'}
-              </button>
-            </form>
+            {error && <p className="text-red-400 text-xs text-center font-medium mb-4">{error}</p>}
+            
+            <button 
+              onClick={handleAccess}
+              disabled={isLoading}
+              className="w-full max-w-sm bg-indigo-600 hover:bg-indigo-700 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+            >
+              {isLoading ? 'Accessing...' : 'Access System'}
+            </button>
           </div>
         ) : (
           /* Dashboard Content */

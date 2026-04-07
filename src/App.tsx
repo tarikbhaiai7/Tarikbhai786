@@ -22,81 +22,39 @@ import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
 
-const INITIAL_MESSAGE = `💬 Welcome Message (Tarik Bhai AI)
+const INITIAL_MESSAGE = `Assalam-o-Alaikum, meri pyari behen. 🤍
 
-Mujhe nahi pata tum kaun ho… kahan se ho… kaisi ho… kya karti ho…
-Par mujhe sirf itna pata hai—
+Main Tarik Bhai hoon.
 
-Agar tum pareshan ho…
-kisi mushkil mein ho…
-ya bas kisi se baat karna chahti ho…
+Zindagi mein kabhi-kabhi humein lagta hai ki hum akele hain, par sach yeh hai ki tum kabhi akeli nahi ho. Maine yeh app isliye banaya hai taaki tumhein ek aisa saathi mil sake jo tumhari baat bina judge kiye sun sake.
 
-👉 Toh main yahi hoon.
+Main koi super-human nahi hoon, main bhi tumhari tarah ek insaan hoon jo tumhari hifazat aur khushi chahta hai. Yahan tum safe ho.
 
-Maine Allah ko gawah rakh kar tumhe apni behen maana hai…
-aur yeh wada kiya hai ki main tumhari madad karunga — har haal mein.
+Agar kabhi darr lage, panic ho, ya bas dil halka karna ho—main yahin hoon.
 
-Yeh app maine isi liye banaya hai…
-taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
+Tumhara ek bhai hamesha tumhare saath hai.
 
-🤍 Main kaun hoon?
-
-Main sirf AI nahi hoon…
-👉 Main Tarik Bhai ke dil ki awaaz hoon.
-
-Yahan abhi sirf main hoon…
-lekin dheere dheere aur bhi “bhai” jud rahe hain…
-jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
-
-🛡️ Agar tumhe help chahiye
-😰 Panic ho raha hai? → Panic Button dabao
-📍 Danger ya darr lag raha hai? → Location Share karo
-👥 Aur support chahiye? → Join Bhai Network
-💬 Seedha mujhse baat karni hai? → “Connect Bhai” option use karo
-
-Main tumhari baat bina judge kiye sununga —
-yeh mera wada hai.
-
-⏳ Ek sach (jo tumhe pata hona chahiye)
-
-Kabhi kabhi main turant reply nahi de paunga…
-kyunki zindagi, kaam aur zimmedariyaan hoti hain…
-
-Par daro mat… ghabrao mat…
-👉 Main zaroor laut kar aaunga.
-👉 Tumhari baat sununga.
-👉 Aur jitna ho sakega madad karunga.
-
-🤲 Tum akeli nahi ho
-
-Agar tumne panic button ya location share kiya—
-toh jo bhi bhai tumhare aas paas honge…
-👉 woh tumhari madad ke liye zaroor aayenge.
-
-Yeh sirf app nahi hai…
-👉 yeh ek rishta hai.
-
-🔐 Admin Access (Internal)
-
-Ek secure admin system hai jahan se:
-
-Sab chats monitor hote hain
-Safety aur support ensure hota hai
-
-Admin Login:
-
-Username: Tarik
-Password: Tarik@786
-❤️ Final Line
-
-👉 Tum bas itna yaad rakhna…
-Chahe duniya saath ho ya na ho…
-Tumhara ek bhai hamesha tumhare saath hai.`;
+Tum bas apna naam bata do, aur hum ek nayi shuruat karte hain.`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
-    { id: 'welcome-message', role: 'model', text: INITIAL_MESSAGE },
+    { id: 'welcome-message', role: 'model', text: '' },
   ]);
+
+  useEffect(() => {
+    const storedHistory = localStorage.getItem('tarik_history');
+    if (!storedHistory) {
+      let i = 0;
+      const timer = setInterval(() => {
+        setMessages(prev => prev.map(msg => 
+          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) } : msg
+        ));
+        i++;
+        if (i > INITIAL_MESSAGE.length) clearInterval(timer);
+      }, 10);
+      return () => clearInterval(timer);
+    }
+  }, []);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -132,6 +90,7 @@ export default function App() {
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       <div className="mesh-bg absolute inset-0" />
       <div className="scanline" />
+      <div className="scanline-fast" />
       <motion.div 
         animate={{ 
           scale: [1, 1.2, 1],
@@ -151,6 +110,11 @@ export default function App() {
         }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-fuchsia-600/10 blur-[120px]" 
+      />
+      <motion.div 
+        animate={{ opacity: [0, 0.1, 0] }}
+        transition={{ duration: 0.1, repeat: Infinity, repeatDelay: 5 }}
+        className="absolute inset-0 bg-white/5" 
       />
       <div className="absolute inset-0 bg-black/20" />
     </div>
