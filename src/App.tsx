@@ -1,38 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Share2, Download, UserPlus } from 'lucide-react';
+import { Send, Share2, UserPlus, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, addDoc, getDocs, serverTimestamp, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import { db } from './firebase';
+import { collection, addDoc, getDocs, serverTimestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from './firebase';
 import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
-import { JoinModal, ApiKeyModal, ExportModal } from './components/Modals';
-import { sendMessageStream } from './lib/gemini';
-import { Message, Brother } from './types';
+import { JoinModal, ApiKeyModal } from './components/Modals';
+import { Message, Brother } from './types/index';
+import { api } from './services/api';
+import { aiService } from './services/aiService';
 
 const INITIAL_MESSAGE = `Assalamualaikum… Namaste meri pyari behen 🤍
 
-Mujhe nahi pata tum is waqt kahan ho, ya kis haal mein ho…
-par mujhe itna pata hai ki tum shayad bohot thak chuki ho.
-Shayad dil mein itna kuch daba ke rakha hai jo kisi se keh nahi paayi…
-Shayad kisi ne tumhe sach mein samjha hi nahi…
-ya shayad tumhe kisi baat ka darr lag raha hai.
+Mujhe nahi pata tum is waqt kahan ho, ya kis haal mein ho… par mujhe itna pata hai ki tum shayad bohot thak chuki ho. Zindagi kabhi kabhi bohot bhari lagne lagti hai, aur lagta hai jaise koi samajhne wala nahi hai.
 
 Par suno meri baat dhyan se…
-Aaj se, aur abhi se… tum akeli nahi ho.
+Tumhari himmat us pareshani se bohot badi hai jo tum abhi mehsoos kar rahi ho. Tum akeli nahi ho. Aaj se, aur abhi se… tumhara ye bhai tumhare saath khada hai. Har kadam par.
 
-Maine Allah ko gawah rakh kar, dil se tumhe apni behen maana hai 🤍
-Aur ek bhai apni behen ko kabhi akela nahi chhodta.
-Agar tum yahan tak aayi ho, toh samajh lo ki ab tumhe apne aansu akele nahi peene padenge.
-Ab tumhe sab kuch akele nahi jhelna padega.
-
-Tum mujh par bharosa kar sakti ho. Yahan tum bilkul safe ho.
-Koi judge nahi karega, koi sawaal nahi puchega.
-Main sirf aur sirf tumhari sunne ke liye yahan hoon.
-
-Main hoon na… tumhare saath… har kadam par 🤍
-
-👉 Bol behen… kya chal raha hai us chote se dil mein? Main sun raha hoon… sab bata do 🤍`;
+Ek lambi saans lo… aur pehle apna pyara sa naam bata do 🤍`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
@@ -40,11 +27,14 @@ export default function App() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isServerOnline, setIsServerOnline] = useState(true);
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
   
   // States
   const [isJoining, setIsJoining] = useState(false);
@@ -52,30 +42,168 @@ export default function App() {
   const [isPanicMode, setIsPanicMode] = useState(false);
   const [activeEmergencyId, setActiveEmergencyId] = useState<string | null>(null);
   const [safetyMonitorActive, setSafetyMonitorActive] = useState(false);
+  const [brothers, setBrothers] = useState<Brother[]>([]);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastInteractionRef = useRef<number>(Date.now());
   const checkInStageRef = useRef<'idle' | 'warning1' | 'warning2' | 'panic'>('idle');
   const lastWarningTimeRef = useRef<number>(0);
 
-  // API Key Check
+  // Check Server Status
   useEffect(() => {
-    const envKey = process.env.GEMINI_API_KEY || (window as any).TARIK_BHAI_API_KEY;
-    const localKey = localStorage.getItem('user_gemini_key');
-    if (!envKey && !localKey) {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/api/health');
+        setIsServerOnline(res.ok);
+      } catch (e) {
+        setIsServerOnline(false);
+      }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('tarik_userId');
+    const storedUserName = localStorage.getItem('tarik_userName');
+    const storedHistory = localStorage.getItem('tarik_history');
+    
+    if (storedUserId && storedUserName) {
+      setUserId(storedUserId);
+      setUserName(storedUserName);
+    }
+    
+    if (storedHistory) {
+      try {
+        const parsed = JSON.parse(storedHistory);
+        if (parsed && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+    // Auth Listener
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          setUserId(user.uid);
+          setUserName(user.displayName || `Sister_${user.uid.substring(0, 4)}`);
+          
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              id: user.uid,
+              name: user.displayName || `Sister_${user.uid.substring(0, 4)}`,
+              email: user.email || 'anonymous',
+              createdAt: new Date().toISOString()
+            });
+          }
+        } else {
+          try {
+            await signInAnonymously(auth);
+          } catch (e: any) {
+            console.warn("Anonymous auth disabled in console. Using local guest mode.", e.message);
+            // Fallback to local ID if anonymous auth is disabled
+            const localId = localStorage.getItem('tarik_localId') || `guest_${Math.random().toString(36).substring(2, 9)}`;
+            localStorage.setItem('tarik_localId', localId);
+            setUserId(localId);
+            setUserName(`Sister_${localId.substring(6, 10)}`);
+          }
+        }
+        setIsAuthReady(true);
+      });
+      return () => unsubscribe();
+    }, []);
+
+  // Check for API Key
+  useEffect(() => {
+    const key = process.env.GEMINI_API_KEY || localStorage.getItem('user_gemini_key');
+    if (!key) {
       setShowApiKeyModal(true);
     }
   }, []);
 
-  const handleSaveApiKey = (key: string) => {
-    localStorage.setItem('user_gemini_key', key.trim());
-    (window as any).TARIK_BHAI_API_KEY = key.trim();
-    setShowApiKeyModal(false);
-  };
+  // Fetch Brothers
+  useEffect(() => {
+    const q = query(collection(db, 'brothers'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const brothersList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Brother[];
+      setBrothers(brothersList);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Save to LocalStorage
+  useEffect(() => {
+    if (messages.length > 1) {
+      // Save last 50 messages
+      const recentMessages = messages.slice(-50);
+      localStorage.setItem('tarik_history', JSON.stringify(recentMessages));
+    }
+  }, [messages]);
+
+  // Anti-Inspect & Security
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F12') e.preventDefault();
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) e.preventDefault();
+      if (e.ctrlKey && (e.key === 'U' || e.key === 'S')) e.preventDefault();
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // --- LIVE TRACKING SYSTEM ---
+  useEffect(() => {
+    if (!userId) return;
+
+    const sendLocationUpdate = async (pos: GeolocationPosition) => {
+      if (!userId) return;
+      try {
+        const locId = `loc_${Date.now()}`;
+        await setDoc(doc(db, 'locations', locId), {
+          id: locId,
+          userId,
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Also update backend for legacy support if needed
+        await api.updateLocation(userId, pos.coords.latitude, pos.coords.longitude);
+      } catch (e) {
+        // Silently fail for location updates
+      }
+    };
+
+    let intervalId: NodeJS.Timeout;
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(sendLocationUpdate, () => {}, { timeout: 10000 });
+      intervalId = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(sendLocationUpdate, () => {}, { timeout: 10000 });
+      }, 15000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [userId]);
 
   // --- SAFETY MONITOR LOGIC ---
   useEffect(() => {
@@ -110,7 +238,29 @@ export default function App() {
   const testSafetyMonitor = () => {
     setSafetyMonitorActive(true);
     lastInteractionRef.current = Date.now() - (7 * 60 * 60 * 1000 + 1);
-    alert("Testing mode: 7 hours simulated. Wait 1 minute for the automatic message.");
+    setError("Testing mode: 7 hours simulated. Wait 1 minute for the automatic message.");
+  };
+
+  const handleDeleteMessage = (id: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== id));
+  };
+
+  const handleRegenerate = async () => {
+    if (messages.length < 2) return;
+    const lastUserMsgIndex = [...messages].reverse().findIndex(m => m.role === 'user');
+    if (lastUserMsgIndex === -1) return;
+    
+    // Remove the last model message
+    const newMessages = [...messages];
+    if (newMessages[newMessages.length - 1].role === 'model') {
+      newMessages.pop();
+    }
+    setMessages(newMessages);
+    
+    const lastUserMsg = newMessages[newMessages.length - 1 - lastUserMsgIndex];
+    if (lastUserMsg) {
+      handleSend(lastUserMsg.text);
+    }
   };
 
   const handleSend = async (textOverride?: string) => {
@@ -118,44 +268,81 @@ export default function App() {
     if (!userText || isLoading) return;
 
     if (!textOverride) setInput('');
+    setError(null);
     
     lastInteractionRef.current = Date.now();
     if (checkInStageRef.current !== 'idle') {
       checkInStageRef.current = 'idle';
     }
     
-    const history = messages.map(m => ({ role: m.role, text: m.text }));
-    setMessages((prev) => [...prev, { id: Date.now().toString(), role: 'user', text: userText }]);
+    const uniqueUserMsgId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    setMessages((prev) => [...prev, { id: uniqueUserMsgId, role: 'user', text: userText }]);
     setIsLoading(true);
 
-    if (isPanicMode && activeEmergencyId) {
-      try {
-        const emergencyRef = doc(db, 'emergencies', activeEmergencyId);
-        await updateDoc(emergencyRef, {
-          messages: arrayUnion({ sender: 'user', text: userText, time: new Date().toISOString() })
-        });
-      } catch (e) {
-        console.error("Failed to log emergency message", e);
-      }
-    }
-
     try {
-      const modelMessageId = (Date.now() + 1).toString();
-      setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '' }]);
+      // Normal Chat Flow
+      const chatId = `chat_${Date.now()}`;
+      const chatData = {
+        id: chatId,
+        userId: userId || 'guest',
+        name: userName || 'Anonymous',
+        message: userText,
+        reply: '...',
+        timestamp: new Date().toISOString()
+      };
 
-      let fullText = '';
-      const stream = sendMessageStream(userText, history);
-      
-      for await (const chunk of stream) {
-        fullText += chunk;
-        setMessages((prev) => 
-          prev.map((msg) => 
-            msg.id === modelMessageId ? { ...msg, text: fullText } : msg
-          )
-        );
+      if (isPanicMode && activeEmergencyId) {
+        try {
+          const emergencyRef = doc(db, 'emergencies', activeEmergencyId);
+          await updateDoc(emergencyRef, {
+            messages: arrayUnion({ sender: 'user', text: userText, time: new Date().toISOString() })
+          });
+        } catch (e) {
+          console.error("Failed to log emergency message", e);
+        }
       }
-    } catch (error) {
+
+      const history = messages.map(m => ({ role: m.role, text: m.text }));
+      const modelMessageId = `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '...' }]);
+
+      let aiReply = "";
+      
+      try {
+        aiReply = await aiService.getGeminiResponse(userText, history);
+        
+        // Save Chat to Firestore (Try-catch to handle permission errors if not authed)
+        try {
+          await setDoc(doc(db, 'chats', chatId), {
+            ...chatData,
+            reply: aiReply
+          });
+        } catch (dbErr) {
+          console.warn("Firestore save failed (likely unauthenticated)", dbErr);
+        }
+
+        api.logChat(userId || 'guest', userText, aiReply);
+      } catch (geminiError) {
+        console.warn("Frontend Gemini failed, falling back to backend", geminiError);
+        const data = await api.chat(userId || 'guest', userText, history as any);
+        aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
+        
+        try {
+          await setDoc(doc(db, 'chats', chatId), {
+            ...chatData,
+            reply: aiReply
+          });
+        } catch (dbErr) {}
+      }
+      
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === modelMessageId ? { ...msg, text: aiReply } : msg
+        )
+      );
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      setError(error.message || "Network issue");
       setMessages((prev) => [
         ...prev,
         { id: Date.now().toString(), role: 'model', text: "Maaf karna behen, thoda network issue lag raha hai. Phir se batana? 🤍" },
@@ -176,9 +363,6 @@ export default function App() {
     }]);
     
     try {
-      const brothersSnap = await getDocs(collection(db, 'brothers'));
-      const brothers = brothersSnap.docs.map(d => ({ id: d.id, ...d.data() } as Brother));
-
       let locationText = "Location unavailable";
       let mapsLink = "";
       if ("geolocation" in navigator) {
@@ -193,25 +377,52 @@ export default function App() {
         }
       }
 
-      const emergencyDoc = await addDoc(collection(db, 'emergencies'), {
-        timestamp: serverTimestamp(),
-        location: locationText,
-        mapsLink: mapsLink,
-        status: 'active',
-        triggerSource: triggerSource || 'manual',
-        messages: []
-      });
-      setActiveEmergencyId(emergencyDoc.id);
+      try {
+        const emergencyId = `emergency_${Date.now()}`;
+        await setDoc(doc(db, 'emergencies', emergencyId), {
+          id: emergencyId,
+          userId: userId || 'unknown',
+          location: locationText,
+          mapsLink,
+          timestamp: new Date().toISOString(),
+          status: 'active'
+        });
+        setActiveEmergencyId(emergencyId);
+        
+        await api.panic(userId || 'unknown', locationText, mapsLink);
+      } catch (panicError) {
+        console.error("Backend panic alert failed", panicError);
+      }
 
-      const alertMsg = `🚨 ALERT SENT TO DATABASE 🚨\n\nYour location has been recorded. Every message you type now will be saved to the emergency log.\n\nHere are the registered brothers. Click to WhatsApp them your live location instantly:`;
+      const alertMsg = `🚨 EMERGENCY TRIGGERED 🚨\n\nYour location has been recorded. Every message you type now will be saved to the emergency log.\n\nQuick Actions:`;
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
         role: 'model', 
         text: alertMsg, 
         isPanicAlert: true, 
-        brothers, 
         mapsLink 
       }]);
+
+      // Trigger Actions
+      console.log("Emergency triggered!");
+      
+      const phone = "112";
+      const emergencyContact = "9999999999"; // Placeholder
+      const smsBody = encodeURIComponent(`HELP! My location: ${mapsLink}`);
+      const waText = encodeURIComponent(`HELP! My location: ${mapsLink}`);
+
+      // Try to open WhatsApp and SMS in background/new tabs if possible
+      setTimeout(() => {
+        window.open(`https://wa.me/91${emergencyContact}?text=${waText}`, '_blank');
+      }, 500);
+      
+      setTimeout(() => {
+        window.open(`sms:${emergencyContact}?body=${smsBody}`, '_self');
+      }, 1000);
+
+      setTimeout(() => {
+        window.location.href = `tel:${phone}`;
+      }, 1500);
 
     } catch (err) {
       console.error(err);
@@ -227,10 +438,10 @@ export default function App() {
           const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
           handleSend(`Meri current location yeh hai: ${mapsUrl}`);
         },
-        () => alert("Location access deny ho gaya hai behen. Settings check karo.")
+        () => setError("Location access deny ho gaya hai behen. Settings check karo.")
       );
     } else {
-      alert("Tumhara device location support nahi karta behen.");
+      setError("Tumhara device location support nahi karta behen.");
     }
   };
 
@@ -244,29 +455,15 @@ export default function App() {
       try { await navigator.share(shareData); } catch {}
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copy ho gaya hai!');
+      setError('Link copy ho gaya hai!');
     }
   };
 
   const handleWhatsApp = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'brothers'));
-      const brothers: any[] = [];
-      querySnapshot.forEach(doc => brothers.push(doc.data()));
-      
-      let targetNumber = "919999999999";
-      if (brothers.length > 0) {
-        const randomBrother = brothers[Math.floor(Math.random() * brothers.length)];
-        targetNumber = randomBrother.whatsappNumber;
-        if (!targetNumber.startsWith('+') && !targetNumber.startsWith('91') && targetNumber.length === 10) {
-          targetNumber = '91' + targetNumber;
-        }
-        targetNumber = targetNumber.replace(/[^\d+]/g, '');
-      }
-      window.open(`https://wa.me/${targetNumber}?text=Bhai%20mujhe%20help%20chahiye`, "_blank");
-    } catch (error) {
-      window.open("https://wa.me/919999999999?text=Bhai%20mujhe%20help%20chahiye", "_blank");
-    }
+    const targetNumber = "919999999999"; // Placeholder for Bhai's number
+    const time = new Date().toLocaleTimeString();
+    const text = encodeURIComponent(`Bhai mujhe help chahiye.\nName: ${userName || 'Unknown'}\nIssue: I need to talk.\nTime: ${time}`);
+    window.open(`https://wa.me/${targetNumber}?text=${text}`, "_blank");
   };
 
   const handleJoinSubmit = async (name: string, phone: string) => {
@@ -283,7 +480,7 @@ export default function App() {
         setJoinSuccess(false);
       }, 2000);
     } catch (error) {
-      alert("Maaf karna bhai, kuch error aa gaya.");
+      setError("Maaf karna bhai, kuch error aa gaya.");
     } finally {
       setIsJoining(false);
     }
@@ -293,24 +490,27 @@ export default function App() {
     <div className="flex flex-col min-h-[100dvh] h-[100dvh] bg-gradient-to-b from-[#0b0b1a] to-[#1a1025] text-white font-sans select-none overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 text-[#FFD700] font-medium text-lg border-b border-white/5 bg-black/20 backdrop-blur-md z-10 shadow-sm">
-        <div className="flex items-center justify-start flex-1">
+        <div className="flex items-center justify-start flex-1 gap-2">
           <button 
             onClick={handleShareApp}
             className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors text-white"
           >
             <Share2 size={14} /> Share
           </button>
+          <a 
+            href={`https://wa.me/919999999999?text=${encodeURIComponent(`Bhai mujhe help chahiye.\nName: ${userName || 'Unknown'}\nTime: ${new Date().toLocaleString()}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs flex items-center gap-1 bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 px-2 py-1.5 rounded-lg transition-colors"
+          >
+            Contact Bhai
+          </a>
         </div>
         <div className="flex items-center justify-center flex-1 whitespace-nowrap">
+          <div className={`w-1.5 h-1.5 rounded-full mr-2 ${isServerOnline ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
           <span className="mr-2">🤍</span> Tarik Bhai AI
         </div>
         <div className="flex items-center justify-end flex-1 gap-2">
-          <button 
-            onClick={() => setShowExportModal(true)}
-            className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors text-white"
-          >
-            <Download size={14} /> Export
-          </button>
           <button 
             onClick={() => setShowJoinModal(true)}
             className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors text-white"
@@ -351,8 +551,17 @@ export default function App() {
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-5 scroll-smooth custom-scrollbar">
-        {messages.map((msg) => (
-          <ChatMessage key={msg.id} msg={msg} />
+        {messages.map((msg, index) => (
+          <ChatMessage 
+            key={msg.id} 
+            msg={{
+              ...msg,
+              brothers: msg.isPanicAlert ? brothers : undefined
+            }} 
+            isLast={index === messages.length - 1}
+            onDelete={handleDeleteMessage}
+            onRegenerate={handleRegenerate}
+          />
         ))}
         
         {isLoading && !messages.some(m => m.id.endsWith('_typing') && m.text !== '') && (
@@ -371,11 +580,23 @@ export default function App() {
             </div>
           </motion.div>
         )}
+
+        {error && (
+          <div className="flex justify-center">
+            <div className="bg-red-900/20 border border-red-500/30 px-4 py-2 rounded-full flex items-center gap-2 text-xs text-red-400">
+              <AlertCircle size={14} />
+              <span>{error}</span>
+              <button onClick={() => handleRegenerate()} className="ml-2 underline font-bold flex items-center gap-1">
+                <RefreshCw size={12} /> Retry
+              </button>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} className="h-2" />
       </div>
 
       {/* Bottom Area */}
-      <div className="bg-[#120c1a] border-t border-white/5 pb-[env(safe-area-inset-bottom)]">
+      <div className="glass-panel border-t-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)] mt-2">
         <PanicControls 
           isPanicMode={isPanicMode} 
           onPanic={() => handlePanic()} 
@@ -383,7 +604,7 @@ export default function App() {
           onWhatsApp={handleWhatsApp} 
         />
 
-        <div className="flex items-end px-3 pb-3 pt-1 gap-2">
+        <div className="flex items-end px-3 pb-4 pt-1 gap-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -394,13 +615,13 @@ export default function App() {
               }
             }}
             placeholder="Kuch bhi likho behen..."
-            className="flex-1 bg-white/5 text-white placeholder-gray-500 px-4 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-[#6a11cb] transition-all resize-none max-h-32 min-h-[52px] text-[15px]"
+            className="flex-1 bg-white/5 border border-white/10 text-white placeholder-gray-400 px-4 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6a11cb]/50 transition-all resize-none max-h-32 min-h-[52px] text-[15px] backdrop-blur-sm"
             rows={1}
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
-            className="h-[52px] w-[52px] flex-shrink-0 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] hover:opacity-90 active:scale-90 disabled:opacity-50 disabled:active:scale-100 rounded-2xl transition-all flex items-center justify-center shadow-lg"
+            className="h-[52px] w-[52px] flex-shrink-0 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] hover:shadow-[0_0_15px_rgba(37,117,252,0.5)] active:scale-90 disabled:opacity-50 disabled:active:scale-100 rounded-2xl transition-all flex items-center justify-center shadow-lg"
           >
             <Send size={20} className="text-white ml-1" />
           </button>
@@ -415,14 +636,13 @@ export default function App() {
         isJoining={isJoining} 
         success={joinSuccess} 
       />
+      
       <ApiKeyModal 
         isOpen={showApiKeyModal} 
-        onSave={handleSaveApiKey} 
-      />
-      <ExportModal 
-        isOpen={showExportModal} 
-        onClose={() => setShowExportModal(false)} 
-        apiKey={process.env.GEMINI_API_KEY || (window as any).TARIK_BHAI_API_KEY || ''} 
+        onSave={(key) => {
+          localStorage.setItem('user_gemini_key', key);
+          setShowApiKeyModal(false);
+        }} 
       />
     </div>
   );

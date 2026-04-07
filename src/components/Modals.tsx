@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, UserPlus, ShieldCheck, Download, Key } from 'lucide-react';
+import { X, UserPlus, ShieldCheck, Key } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -94,29 +94,6 @@ export const JoinModal: React.FC<JoinModalProps> = ({ isOpen, onClose, onSubmit,
     </Modal>
   );
 };
-
-interface ExportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  apiKey: string;
-}
-
-export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, apiKey }) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Export App">
-    <div className="space-y-4">
-      <p className="text-sm text-gray-400">Aap is app ko offline use karne ke liye export kar sakte hain. Hum API key ko obfuscate kar denge.</p>
-      <form action="/download-secure" method="POST" className="space-y-3">
-        <input type="hidden" name="apiKey" value={apiKey} />
-        <button 
-          type="submit"
-          className="w-full bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-        >
-          <Download size={18} /> Download Secure HTML
-        </button>
-      </form>
-    </div>
-  </Modal>
-);
 
 interface ApiKeyModalProps {
   isOpen: boolean;

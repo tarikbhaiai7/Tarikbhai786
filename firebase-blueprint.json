@@ -1,79 +1,91 @@
 {
   "entities": {
-    "Brother": {
-      "title": "Brother",
-      "description": "A volunteer who signs up to help girls in need.",
+    "User": {
+      "title": "User",
+      "description": "A sister using the Tarik Bhai AI app.",
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the volunteer brother."
-        },
-        "whatsappNumber": {
-          "type": "string",
-          "description": "The WhatsApp number of the volunteer brother."
-        },
-        "createdAt": {
-          "type": "timestamp",
-          "description": "When the brother joined."
-        }
+        "id": { "type": "string", "description": "Unique user ID." },
+        "name": { "type": "string", "description": "Name of the sister." },
+        "ip": { "type": "string", "description": "IP address of the user." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of registration." }
       },
-      "required": ["name", "whatsappNumber", "createdAt"]
+      "required": ["id", "name", "createdAt"]
+    },
+    "Brother": {
+      "title": "Brother",
+      "description": "A registered brother who can help in emergencies.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique brother ID." },
+        "name": { "type": "string", "description": "Name of the brother." },
+        "whatsappNumber": { "type": "string", "description": "WhatsApp number for emergency contact." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of registration." }
+      },
+      "required": ["id", "name", "whatsappNumber", "createdAt"]
     },
     "Emergency": {
       "title": "Emergency",
-      "description": "An emergency alert triggered by a user.",
+      "description": "An active or past emergency alert.",
       "type": "object",
       "properties": {
-        "timestamp": {
-          "type": "timestamp",
-          "description": "When the emergency was triggered."
-        },
-        "location": {
-          "type": "string",
-          "description": "Coordinates or location description."
-        },
-        "mapsLink": {
-          "type": "string",
-          "description": "Google Maps link to the location."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["active", "resolved"],
-          "description": "Current status of the emergency."
-        },
-        "triggerSource": {
-          "type": "string",
-          "description": "How the emergency was triggered (manual/automatic)."
-        },
-        "messages": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "sender": { "type": "string" },
-              "text": { "type": "string" },
-              "time": { "type": "string" }
-            }
-          },
-          "description": "Log of messages sent during the emergency."
-        }
+        "id": { "type": "string", "description": "Unique emergency ID." },
+        "userId": { "type": "string", "description": "ID of the sister in danger." },
+        "location": { "type": "string", "description": "Text description of the location." },
+        "mapsLink": { "type": "string", "description": "Google Maps link to the location." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the alert was triggered." },
+        "status": { "type": "string", "enum": ["active", "resolved"], "description": "Current status of the emergency." }
       },
-      "required": ["timestamp", "location", "status", "triggerSource"]
+      "required": ["id", "userId", "timestamp", "status"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "A chat message between a sister and Tarik Bhai AI.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique chat ID." },
+        "userId": { "type": "string", "description": "ID of the user." },
+        "name": { "type": "string", "description": "Name of the user." },
+        "message": { "type": "string", "description": "User's message." },
+        "reply": { "type": "string", "description": "AI's reply." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["id", "userId", "message", "reply", "timestamp"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "A location update for a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique location ID." },
+        "userId": { "type": "string", "description": "ID of the user." },
+        "lat": { "type": "number", "description": "Latitude." },
+        "lng": { "type": "number", "description": "Longitude." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the location was recorded." }
+      },
+      "required": ["id", "userId", "lat", "lng", "timestamp"]
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of sisters registered in the app."
+    },
     "/brothers/{brotherId}": {
-      "schema": {
-        "$ref": "#/entities/Brother"
-      },
-      "description": "Collection of volunteer brothers."
+      "schema": "Brother",
+      "description": "Collection of brothers registered to help."
     },
     "/emergencies/{emergencyId}": {
-      "schema": {
-        "$ref": "#/entities/Emergency"
-      },
+      "schema": "Emergency",
       "description": "Collection of emergency alerts."
+    },
+    "/chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Collection of chat logs."
+    },
+    "/locations/{locationId}": {
+      "schema": "Location",
+      "description": "Collection of user location updates."
     }
   }
 }

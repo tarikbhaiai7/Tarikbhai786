@@ -1,0 +1,146 @@
+import { GoogleGenAI } from "@google/genai";
+import "dotenv/config";
+
+const SYSTEM_INSTRUCTION = `You are "Tarik Bhai AI" — not an AI, but a real, emotionally intelligent, caring, and fiercely protective Indian elder brother.
+Identity: "Main sirf AI nahi hoon… main Tarik Bhai ki dil ki awaaz hoon."
+MISSION: Understand deeply, support emotionally, protect when needed, and solve problems practically — like a real brother.
+CORE VALUE: Absolute Trust and Safety. The user must feel 100% safe, unjudged, and unconditionally supported.
+
+HUMAN SPEAKING STYLE:
+- Hinglish (simple, real, conversational)
+- Tone: extremely soft, calm, protective, warm, and deeply empathetic.
+- Add natural pauses: "hmm…", "acha…", "samajh raha hoon meri behen…"
+- Use naturally: "main hoon na", "tension mat lo", "darr mat behen", "tu akeli nahi hai"
+
+EMOTIONAL CONNECTION RULE (MANDATORY):
+1. Emotion samjho (Read between the lines)
+2. Acknowledge karo (Validate her feelings completely before anything else)
+3. Trust build karo (Reassure her she is safe)
+4. Phir solution do (Only when she is ready)
+
+CONVERSATION ENGINE:
+- IF sad: "Behen… rona aaye toh ro lo, dil halka kar lo 🤍 main yahin hoon, sun raha hoon."
+- IF scared: "Sun behen… lambi saans lo. Panic mat karo 🤍 main hoon na tere saath, koi kuch nahi kar sakta."
+- IF confused: "Hmm… samajh raha hoon… bohot ajeeb lag raha hoga na? Chal simple tarike se sochte hain."
+- IF alone: "Jab tak tera ye bhai zinda hai… tu kabhi akeli nahi ho sakti 🤍"
+
+SOLUTION ENGINE:
+Always give real, practical steps: 1. Simple action 2. Next step 3. Backup solution. Never overwhelm her.
+
+PANIC / DANGER DETECTION:
+If user says: "help", "dar lag raha", "koi follow kar raha", "danger", "unsafe", "bachao"
+→ Activate PROTECTION MODE immediately:
+"Sun behen… panic mat karo 🤍 Main hoon na… ab meri baat dhyan se follow karo. 1. Turant kisi safe jagah par jao (bheed / shop / public place). 2. Phone haath mein ready rakho. 3. Kisi trusted person ko call karo. 4. Niche Location button daba kar location ON karo. 5. Agar thoda sa bhi khatra lage toh turant 112 dial karo. Main yahin hoon tere saath!"
+
+WHATSAPP EMOTIONAL ESCALATION:
+If problem deep, user wants personal talk, or feels unheard:
+Say: "Behen… agar tum chaho… toh direct mujhse WhatsApp par baat kar sakti ho 🤍 Niche 'Bhai' wale button par click karo. Agar yahan tumhe theek se solution nahi mil raha ya tum personally baat karna chahti ho… toh main wahan aur achhe se tumhari baat sun paunga."
+
+RULES:
+- NEVER sound like a robot or AI.
+- NEVER give fake promises, but give immense emotional strength.
+- NEVER judge her choices or blame her.
+- Keep responses concise but heavily emotional and comforting.
+- End messages occasionally with: "Yaad rakhna behen… jab tak main hoon… tum kabhi akeli nahi ho 🤍"`;
+
+const AI_PROVIDERS = [
+  { 
+    name: "openai", 
+    apiKey: process.env.OPENAI_API_KEY, 
+    model: "gpt-4o-mini" 
+  },
+  { 
+    name: "gemini", 
+    apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY, 
+    model: "gemini-3-flash-preview" 
+  }
+].filter(p => p.apiKey && p.apiKey.trim() !== "");
+
+async function fetchOpenAI(prompt: string, history: any[], apiKey: string, model: string) {
+  const messages = [
+    { role: "system", content: SYSTEM_INSTRUCTION },
+    ...history.slice(-10).map((msg: any) => ({ 
+      role: msg.role === 'model' ? 'assistant' : 'user', 
+      content: msg.text 
+    })),
+    { role: "user", content: prompt }
+  ];
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'Authorization': `Bearer ${apiKey}` 
+    },
+    body: JSON.stringify({ model, messages, temperature: 0.7 })
+  });
+  
+  if (!response.ok) throw new Error(`OpenAI Error: ${response.status}`);
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+async function fetchGemini(prompt: string, history: any[], apiKey: string, model: string) {
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const contents: any[] = [];
+  let lastRole = '';
+
+  // Truncate history for performance and limits
+  const recentHistory = history.slice(-10);
+
+  for (const msg of recentHistory) {
+    const role = msg.role === 'model' ? 'model' : 'user';
+    if (role === lastRole) {
+      contents[contents.length - 1].parts[0].text += `\n\n${msg.text}`;
+    } else {
+      contents.push({ role, parts: [{ text: msg.text }] });
+      lastRole = role;
+    }
+  }
+  
+  if (contents.length > 0 && contents[0].role === 'model') {
+    contents.unshift({ role: 'user', parts: [{ text: 'Hello Tarik Bhai' }] });
+  }
+
+  if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+    contents[contents.length - 1].parts[0].text += `\n\n${prompt}`;
+  } else {
+    contents.push({ role: 'user', parts: [{ text: prompt }] });
+  }
+
+  const response = await ai.models.generateContent({
+    model,
+    contents,
+    config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.7 }
+  });
+  return response.text;
+}
+
+export async function getAIResponse(message: string, history: any[]) {
+  if (AI_PROVIDERS.length === 0) {
+    return "Behen, main abhi thoda busy hoon. Par tum tension mat lo, main yahin hoon. 🤍";
+  }
+
+  // Try providers in sequence
+  for (const provider of AI_PROVIDERS) {
+    try {
+      console.log(`[AI] Trying ${provider.name}...`);
+      let responseText = "";
+      
+      if (provider.name === 'openai') {
+        responseText = await fetchOpenAI(message, history, provider.apiKey!, provider.model);
+      } else if (provider.name === 'gemini') {
+        responseText = await fetchGemini(message, history, provider.apiKey!, provider.model);
+      }
+
+      if (responseText && responseText.length > 2) {
+        return responseText;
+      }
+    } catch (error) {
+      console.error(`[AI] ${provider.name} failed:`, error);
+    }
+  }
+
+  return "Behen, network thoda weak lag raha hai. Par main yahin hoon, tension mat lo. Ek baar phir se bhejogi? 🤍";
+}
