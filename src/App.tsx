@@ -17,70 +17,41 @@ import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
 import { JoinModal } from './components/Modals';
-import { AdminPanel } from './components/AdminPanel';
 import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
 
-const INITIAL_MESSAGE = `💬 Welcome Message (Tarik Bhai AI)
+const INITIAL_MESSAGE = `Assalam-o-Alaikum aur Namaste.
 
-Mujhe nahi pata tum kaun ho… kahan se ho… kaisi ho… kya karti ho…
-Par mujhe sirf itna pata hai—
+Main Tarik Bhai hoon.
 
-Agar tum pareshan ho…
-kisi mushkil mein ho…
-ya bas kisi se baat karna chahti ho…
+Mujhe nahi pata tum kaun ho, kahan se ho, kaisi ho, kya karti ho. Par mujhe sirf itna pata hai—
 
-👉 Toh main yahi hoon.
+Agar tum pareshan ho, kisi mushkil mein ho, ya bas kisi se baat karna chahti ho, toh main yahi hoon.
 
-Maine Allah ko gawah rakh kar tumhe apni behen maana hai…
-aur yeh wada kiya hai ki main tumhari madad karunga — har haal mein.
+Maine Allah ko gawah rakh kar tumhe apni behen maana hai aur yeh wada kiya hai ki main tumhari madad karunga, har haal mein.
 
-Yeh app maine isi liye banaya hai…
-taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
+Yeh app maine isi liye banaya hai taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
 
-🤍 Main kaun hoon?
+Main sirf AI nahi hoon, main Tarik Bhai ke dil ki awaaz hoon. Yahan abhi sirf main hoon, lekin dheere dheere aur bhi bhai jud rahe hain jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
 
-Main sirf AI nahi hoon…
-👉 Main Tarik Bhai ke dil ki awaaz hoon.
+Agar tumhe help chahiye:
+Panic ho raha hai? Panic Button dabao.
+Danger ya darr lag raha hai? Location Share karo.
+Aur support chahiye? Join Bhai Network.
+Seedha mujhse baat karni hai? Connect Bhai option use karo.
 
-Yahan abhi sirf main hoon…
-lekin dheere dheere aur bhi “bhai” jud rahe hain…
-jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
+Main tumhari baat bina judge kiye sununga, yeh mera wada hai.
 
-🛡️ Agar tumhe help chahiye
-😰 Panic ho raha hai? → Panic Button dabao
-📍 Danger ya darr lag raha hai? → Location Share karo
-👥 Aur support chahiye? → Join Bhai Network
-💬 Seedha mujhse baat karni hai? → “Connect Bhai” option use karo
+Kabhi kabhi main turant reply nahi de paunga kyunki zindagi, kaam aur zimmedariyaan hoti hain. Par daro mat, ghabrao mat. Main zaroor laut kar aaunga, tumhari baat sununga, aur jitna ho sakega madad karunga.
 
-Main tumhari baat bina judge kiye sununga —
-yeh mera wada hai.
+Tum akeli nahi ho.
 
-⏳ Ek sach (jo tumhe pata hona chahiye)
+Agar tumne panic button ya location share kiya, toh jo bhi bhai tumhare aas paas honge, woh tumhari madad ke liye zaroor aayenge.
 
-Kabhi kabhi main turant reply nahi de paunga…
-kyunki zindagi, kaam aur zimmedariyaan hoti hain…
+Yeh sirf app nahi hai, yeh ek rishta hai.
 
-Par daro mat… ghabrao mat…
-👉 Main zaroor laut kar aaunga.
-👉 Tumhari baat sununga.
-👉 Aur jitna ho sakega madad karunga.
-
-🤲 Tum akeli nahi ho
-
-Agar tumne panic button ya location share kiya—
-toh jo bhi bhai tumhare aas paas honge…
-👉 woh tumhari madad ke liye zaroor aayenge.
-
-Yeh sirf app nahi hai…
-👉 yeh ek rishta hai.
-
-❤️ Final Line
-
-👉 Tum bas itna yaad rakhna…
-Chahe duniya saath ho ya na ho…
-Tumhara ek bhai hamesha tumhare saath hai.`;
+Tum bas itna yaad rakhna, chahe duniya saath ho ya na ho, tumhara ek bhai hamesha tumhare saath hai.`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
@@ -91,14 +62,28 @@ export default function App() {
     const storedHistory = localStorage.getItem('tarik_history');
     if (!storedHistory) {
       let i = 0;
-      const timer = setInterval(() => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) } : msg
-        ));
-        i++;
-        if (i > INITIAL_MESSAGE.length) clearInterval(timer);
-      }, 5);
-      return () => clearInterval(timer);
+      const type = () => {
+        if (i <= INITIAL_MESSAGE.length) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE.slice(0, i) + (i % 2 === 0 ? '|' : '') } : msg
+          ));
+          
+          // Human-like delay logic
+          const char = INITIAL_MESSAGE[i];
+          let delay = 30 + Math.random() * 50; // Base delay 30-80ms
+          if (char === '.' || char === '!' || char === '?' || char === '…') delay += 300; // Pause after punctuation
+          if (char === ' ') delay -= 10; // Slightly faster on spaces
+          
+          i++;
+          setTimeout(type, delay);
+        } else {
+          // Final state: remove cursor
+          setMessages(prev => prev.map(msg => 
+            msg.id === 'welcome-message' ? { ...msg, text: INITIAL_MESSAGE } : msg
+          ));
+        }
+      };
+      type();
     }
   }, []);
   const [input, setInput] = useState('');
@@ -110,7 +95,6 @@ export default function App() {
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showAdminModal, setShowAdminModal] = useState(false);
   
   // States
   const [isJoining, setIsJoining] = useState(false);
@@ -764,14 +748,6 @@ export default function App() {
                 <Send size={22} />
               </motion.button>
             </div>
-            {/* Admin Trigger - Visible Hacking Indicator */}
-            <motion.button 
-              onClick={() => setShowAdminModal(true)}
-              animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute bottom-0 right-0 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)] z-50 cursor-pointer"
-              title="System Monitor: Admin Access"
-            />
           </div>
           
           <div className="text-center pb-2">
@@ -789,11 +765,6 @@ export default function App() {
         onSubmit={handleJoinSubmit} 
         isJoining={isJoining} 
         success={joinSuccess} 
-      />
-      
-      <AdminPanel 
-        isOpen={showAdminModal} 
-        onClose={() => setShowAdminModal(false)} 
       />
     </div>
   );
