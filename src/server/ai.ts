@@ -38,7 +38,7 @@ const AI_PROVIDERS = [
   { 
     name: "gemini", 
     apiKey: process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY, 
-    model: "gemini-1.5-flash" 
+    model: "gemini-3-flash-preview" 
   },
   { 
     name: "openai", 

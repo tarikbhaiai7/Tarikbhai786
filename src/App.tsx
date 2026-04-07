@@ -617,6 +617,19 @@ export default function App() {
       />
 
       <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative">
+        {/* Top Announcement Banner */}
+        <motion.div 
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          onClick={() => setShowEmotionalModal(true)}
+          className="bg-gradient-to-r from-[#008069]/40 via-[#00a884]/40 to-[#008069]/40 backdrop-blur-md border-b border-white/10 py-2.5 px-4 text-center z-[70] cursor-pointer hover:brightness-125 transition-all group"
+        >
+          <p className="text-[10px] sm:text-xs font-bold text-white tracking-widest uppercase flex items-center justify-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            <span className="group-hover:scale-105 transition-transform">Har Behen ki Hifazat, Har Bhai ka Farz • Maine ye kyun banaya? Touch karke dekho • ❤️</span>
+          </p>
+        </motion.div>
+
         {/* Header */}
         <header className={`sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shadow-md ${darkMode ? 'bg-[#0b141a]/90 backdrop-blur-xl' : 'bg-[#008069]/90 backdrop-blur-xl'}`}>
           <div className="flex items-center gap-3">
@@ -645,9 +658,9 @@ export default function App() {
               onClick={() => handleIconClick('share', handleShare)}
               className="p-2 rounded-full text-white/90 hover:bg-white/10 relative"
             >
-              <Share size={20} />
+              <Share2 size={20} />
               {activeIcon === 'share' && (
-                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Share</span>
+                <span className="absolute top-full mt-2 right-0 bg-[#202c33] text-white text-[10px] font-bold py-1 px-2 rounded-lg border border-white/10 whitespace-nowrap z-50">Tap again to Share</span>
               )}
             </motion.button>
             <motion.button
@@ -657,7 +670,7 @@ export default function App() {
             >
               <BookOpen size={20} />
               {activeIcon === 'library' && (
-                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again for Library</span>
+                <span className="absolute top-full mt-2 right-0 bg-[#202c33] text-white text-[10px] font-bold py-1 px-2 rounded-lg border border-white/10 whitespace-nowrap z-50">Tap again for Library</span>
               )}
             </motion.button>
             <motion.button
@@ -667,7 +680,7 @@ export default function App() {
             >
               <MessageCircle size={20} />
               {activeIcon === 'whatsapp' && (
-                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Connect</span>
+                <span className="absolute top-full mt-2 right-0 bg-[#202c33] text-white text-[10px] font-bold py-1 px-2 rounded-lg border border-white/10 whitespace-nowrap z-50">Tap again to Connect</span>
               )}
             </motion.button>
             <motion.button
@@ -677,7 +690,7 @@ export default function App() {
             >
               <UserPlus size={20} />
               {activeIcon === 'join' && (
-                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again to Join</span>
+                <span className="absolute top-full mt-2 right-0 bg-[#202c33] text-white text-[10px] font-bold py-1 px-2 rounded-lg border border-white/10 whitespace-nowrap z-50">Tap again to Join</span>
               )}
             </motion.button>
             <motion.button
@@ -687,7 +700,7 @@ export default function App() {
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               {activeIcon === 'theme' && (
-                <span className="absolute top-full mt-2 right-0 bg-black/90 text-white text-[10px] font-bold py-1 px-2 rounded-lg whitespace-nowrap z-50">Tap again for Theme</span>
+                <span className="absolute top-full mt-2 right-0 bg-[#202c33] text-white text-[10px] font-bold py-1 px-2 rounded-lg border border-white/10 whitespace-nowrap z-50">Tap again for Theme</span>
               )}
             </motion.button>
           </div>
@@ -836,10 +849,18 @@ export default function App() {
                     "Yeh platform ek vaada hai—ki tum akeli nahi ho."
                   </p>
                   <p>
-                    Jab tum panic button dabati ho, toh sirf ek machine nahi, tumhare aas-paas ke <span className="text-orange-400 font-bold">"Bhai"</span> jaag uthte hain. Yeh platform bilkul free hai aur hamesha rahega, kyunki rishton ki koi keemat nahi hoti.
+                    <span className="text-[#00a884] font-bold">Kaise Kaam Karta Hai?</span><br />
+                    Jab tum panic button dabati ho, toh sirf ek machine nahi, tumhare aas-paas ke <span className="text-[#00a884] font-bold">"Bhai"</span> (verified volunteers) jaag uthte hain. Unhe tumhari location milti hai aur woh turant madad ke liye nikalte hain.
+                  </p>
+                  <p>
+                    <span className="text-[#00a884] font-bold">Har Option Ka Maksad:</span><br />
+                    - <span className="text-white">Panic:</span> Turant emergency alert bhejne ke liye.<br />
+                    - <span className="text-white">Location:</span> Apni live jagah share karne ke liye.<br />
+                    - <span className="text-white">Library:</span> Self-defense aur legal rights sikhne ke liye.<br />
+                    - <span className="text-white">Join:</span> Bhaiyon ko hamare saath judne ke liye.
                   </p>
                   <p className="text-xs text-gray-500 uppercase tracking-widest pt-4">
-                    Join us, be a brother, protect a sister. ❤️
+                    Har Behen ki Hifazat, Har Bhai ka Farz. ❤️
                   </p>
                 </div>
 
@@ -849,7 +870,7 @@ export default function App() {
                       setShowEmotionalModal(false);
                       setShowJoinModal(true);
                     }}
-                    className="flex-1 vip-max-pro-gradient text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-orange-500/20 hover:scale-105 transition-all"
+                    className="flex-1 bg-[#00a884] text-white font-bold py-4 rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-[#00a884]/20 hover:scale-105 transition-all"
                   >
                     Join as a Brother
                   </button>
