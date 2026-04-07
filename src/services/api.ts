@@ -94,5 +94,76 @@ export const api = {
     });
     if (!response.ok) throw new Error('Failed to add brother');
     return response.json();
+  },
+
+  // Admin Methods
+  async adminLogin(username: string, password: string): Promise<string> {
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (!response.ok) throw new Error('Invalid credentials');
+    const data = await response.json();
+    return data.token;
+  },
+
+  async getAdminStats(token: string) {
+    const response = await fetch('/api/admin/stats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async getAdminChats(token: string) {
+    const response = await fetch('/api/admin/chats', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async getAdminUsers(token: string) {
+    const response = await fetch('/api/admin/users', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async getAdminEmergencies(token: string) {
+    const response = await fetch('/api/admin/emergencies', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async deleteAdminChat(token: string, timestamp: string) {
+    const response = await fetch(`/api/admin/chats/${timestamp}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async deleteAdminUser(token: string, userId: string) {
+    const response = await fetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
+  },
+
+  async deleteAdminEmergency(token: string, id: string) {
+    const response = await fetch(`/api/admin/emergencies/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Unauthorized');
+    return response.json();
   }
 };

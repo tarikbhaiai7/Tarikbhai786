@@ -226,7 +226,10 @@ async function startServer() {
   
   app.post("/api/admin/login", (req, res) => {
     const { username, password } = req.body;
-    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    const adminUser = process.env.ADMIN_USERNAME || "Tarik";
+    const adminPass = process.env.ADMIN_PASSWORD || "Tarik@786";
+    
+    if (username === adminUser && password === adminPass) {
       const token = jwt.sign({ admin: true }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "24h" });
       res.json({ token });
     } else {
@@ -246,6 +249,14 @@ async function startServer() {
     }
   };
 
+  app.get("/api/admin/chats", authenticateAdmin, async (req, res) => {
+    res.json(await db.getChats(200));
+  });
+
+  app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
+    res.json(await db.getAllUsers());
+  });
+
   app.get("/api/admin/stats", authenticateAdmin, async (req, res) => {
     res.json({
       totalUsers: await db.getUserCount(),
@@ -261,6 +272,21 @@ async function startServer() {
 
   app.get("/api/admin/emergencies", authenticateAdmin, async (req, res) => {
     res.json(await db.getAllEmergencies(50));
+  });
+
+  app.delete("/api/admin/chats/:timestamp", authenticateAdmin, async (req, res) => {
+    await db.deleteChat(req.params.timestamp);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/admin/users/:userId", authenticateAdmin, async (req, res) => {
+    await db.deleteUser(req.params.userId);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/admin/emergencies/:id", authenticateAdmin, async (req, res) => {
+    await db.deleteEmergency(req.params.id);
+    res.json({ success: true });
   });
 
   // --- STATIC FILES & VITE ---

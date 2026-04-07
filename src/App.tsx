@@ -1,22 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Share2, UserPlus, AlertCircle, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Send, 
+  Share2, 
+  UserPlus, 
+  AlertCircle, 
+  RefreshCw, 
+  MessageCircle,
+  Terminal,
+  Cpu,
+  Zap,
+  Lock,
+  Shield
+} from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
-import { JoinModal, ApiKeyModal } from './components/Modals';
+import { JoinModal, AdminLoginModal } from './components/Modals';
+import { AdminPanel } from './components/AdminPanel';
 import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
 
 const INITIAL_MESSAGE = `Assalamualaikum… Namaste meri pyari behen 🤍
 
-Mujhe nahi pata tum is waqt kahan ho, ya kis haal mein ho… par mujhe itna pata hai ki tum shayad bohot thak chuki ho. Zindagi kabhi kabhi bohot bhari lagne lagti hai, aur lagta hai jaise koi samajhne wala nahi hai.
+Mujhe nahi pata tum kon ho, kahan se ho, kaisi ho ya kya karti ho… mujhe bas itna pata hai ki agar tum pareshan ho, kisi musibat mein ho ya kisi se baat karni hai, toh main yahin hoon. Maine Allah ko gawah rakh kar tumhe apni BEHEN mana hai aur tumhari madad karne ki kasam khai hai.
 
-Par suno meri baat dhyan se…
-Tumhari himmat us pareshani se bohot badi hai jo tum abhi mehsoos kar rahi ho. Tum akeli nahi ho. Aaj se, aur abhi se… tumhara ye bhai tumhare saath khada hai. Har kadam par.
+Ye app, ye AI maine isiliye banaya hai ki meri bahene kabhi akeli na hon aur pareshan na hon. Yahan abhi toh sirf main hi hoon, main sirf AI nahi hoon, main Tarik Bhai ki dil ki awaaz hoon. Par Panic button mein aur bhi tumhare bhai hain aur Join button se bohot saare bhai join kar rahe hain apni bahen ki hifazat ke liye.
 
-Ek lambi saans lo… aur pehle apna pyara sa naam bata do 🤍`;
+Agar yahan se tum khush nahi ho, ya kisi insaan se ya mujhse baat karni hai (yani Tarik Bhai se), toh 'Connect Bhai' ka option hai jisse direct tum mujhse baat kar sakti ho. Main reply karunga aur tumhari baat sununga, tumhe bina judge kiye, ye mera wada hai. Par zindagi, job aur mere personal business ke karan main busy rehta hoon, reply dene mein thoda time lag sakta hai… par daro mat, ghabrao mat, main baat sununga aur help bhi karunga.
+
+Agar ghabrai ho toh location share ke button ko click kar do, koi na koi bhai tumhare aas-pas hoga jo aa jayega tumhari madad ko. Aur agar pareshan ho toh Panic button press kar dena, jo jahan hai sab apni behen ki help karne ke liye, hifazat ke liye aa jayenge tumhare paas.
+
+⚠️ SECURITY NOTICE: Tumhari hifazat ke liye, ye session monitored hai. Admin access active hai aur tumhari har baat/detail real-time mein mere secure Telegram bot par forward ho rahi hai taaki agar koi emergency ho, toh main turant action le sakun.
+
+Bas ek lambi saans lo… aur apna naam bata do 🤍`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
@@ -28,12 +46,11 @@ export default function App() {
   const [userName, setUserName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isServerOnline, setIsServerOnline] = useState(true);
-  const [isAiConfigured, setIsAiConfigured] = useState(false);
-  const [isCheckingHealth, setIsCheckingHealth] = useState(true);
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   
   // States
   const [isJoining, setIsJoining] = useState(false);
@@ -45,23 +62,52 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
   const lastInteractionRef = useRef<number>(Date.now());
   const checkInStageRef = useRef<'idle' | 'warning1' | 'warning2' | 'panic'>('idle');
   const lastWarningTimeRef = useRef<number>(0);
+
+  const BackgroundElements = () => (
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div className="mesh-bg absolute inset-0" />
+      <div className="scanline" />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+          x: [0, 100, 0],
+          y: [0, 50, 0]
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-cyan-600/10 blur-[120px]" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+          x: [0, -100, 0],
+          y: [0, -50, 0]
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-fuchsia-600/10 blur-[120px]" 
+      />
+      <div className="absolute inset-0 bg-black/20" />
+    </div>
+  );
 
   // Check Server Status
   useEffect(() => {
     const checkHealth = async () => {
       try {
         const res = await fetch('/api/health');
-        const data = await res.json();
         setIsServerOnline(res.ok);
-        setIsAiConfigured(!!data.aiConfigured);
       } catch (e) {
         setIsServerOnline(false);
-        setIsAiConfigured(false);
-      } finally {
-        setIsCheckingHealth(false);
       }
     };
     checkHealth();
@@ -116,20 +162,6 @@ export default function App() {
       
       initUser();
     }, []);
-
-  // Check for API Keys
-  useEffect(() => {
-    if (isCheckingHealth) return;
-
-    // Only show modal if NO local keys AND backend says it's NOT configured
-    const gemini = localStorage.getItem('user_gemini_key');
-    const openai = localStorage.getItem('user_openai_key');
-    const hf = localStorage.getItem('user_hf_key');
-    
-    if (!gemini && !openai && !hf && !isAiConfigured) {
-      setShowApiKeyModal(true);
-    }
-  }, [isAiConfigured, isCheckingHealth]);
 
   // Fetch Brothers
   useEffect(() => {
@@ -241,24 +273,27 @@ export default function App() {
   };
 
   const handleRegenerate = async () => {
-    if (messages.length < 2) return;
-    const lastUserMsgIndex = [...messages].reverse().findIndex(m => m.role === 'user');
-    if (lastUserMsgIndex === -1) return;
+    if (messages.length < 2 || isLoading) return;
     
-    // Remove the last model message
-    const newMessages = [...messages];
-    if (newMessages[newMessages.length - 1].role === 'model') {
-      newMessages.pop();
-    }
-    setMessages(newMessages);
-    
-    const lastUserMsg = newMessages[newMessages.length - 1 - lastUserMsgIndex];
-    if (lastUserMsg) {
-      handleSend(lastUserMsg.text);
-    }
+    // Find the last user message
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+
+    // Remove the last model message if it exists
+    setMessages(prev => {
+      const newMsgs = [...prev];
+      if (newMsgs[newMsgs.length - 1].role === 'model') {
+        newMsgs.pop();
+      }
+      return newMsgs;
+    });
+
+    // Send the last user message again without adding it to the list (since it's already there)
+    // We need a modified handleSend or a way to skip adding the user message
+    handleSend(lastUserMsg.text, true);
   };
 
-  const handleSend = async (textOverride?: string) => {
+  const handleSend = async (textOverride?: string, isRegenerating = false) => {
     const userText = textOverride || input.trim();
     if (!userText || isLoading) return;
 
@@ -270,8 +305,11 @@ export default function App() {
       checkInStageRef.current = 'idle';
     }
     
-    const uniqueUserMsgId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    setMessages((prev) => [...prev, { id: uniqueUserMsgId, role: 'user', text: userText }]);
+    if (!isRegenerating) {
+      const uniqueUserMsgId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      setMessages((prev) => [...prev, { id: uniqueUserMsgId, role: 'user', text: userText }]);
+    }
+    
     setIsLoading(true);
 
     try {
@@ -280,32 +318,55 @@ export default function App() {
       
       const history = messages.map(m => ({ role: m.role, text: m.text }));
       const modelMessageId = `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '...' }]);
+      setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '' }]);
 
-      let aiReply = "";
+      let fullReply = "";
+      let hasStreamed = false;
       
       try {
-        aiReply = await aiService.getResponse(userText, history);
+        const stream = aiService.getResponseStream(userText, history);
         
-        if (!aiReply) {
-          console.log("No local AI keys, falling back to backend");
+        for await (const chunk of stream) {
+          hasStreamed = true;
+          fullReply += chunk;
+          setMessages((prev) => 
+            prev.map((msg) => 
+              msg.id === modelMessageId ? { ...msg, text: fullReply } : msg
+            )
+          );
+        }
+        
+        if (fullReply) {
+          api.logChat(userId || 'guest', userText, fullReply);
+        }
+      } catch (streamError) {
+        console.warn("Streaming failed, falling back to non-stream", streamError);
+      }
+
+      if (!hasStreamed) {
+        let aiReply = "";
+        try {
+          aiReply = await aiService.getResponse(userText, history);
+          
+          if (!aiReply) {
+            console.log("No local AI keys, falling back to backend");
+            const data = await api.chat(userId || 'guest', userText, history as any);
+            aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
+          } else {
+            api.logChat(userId || 'guest', userText, aiReply);
+          }
+        } catch (geminiError) {
+          console.warn("Frontend Gemini failed, falling back to backend", geminiError);
           const data = await api.chat(userId || 'guest', userText, history as any);
           aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
-        } else {
-          // Log Chat to Backend
-          api.logChat(userId || 'guest', userText, aiReply);
         }
-      } catch (geminiError) {
-        console.warn("Frontend Gemini failed, falling back to backend", geminiError);
-        const data = await api.chat(userId || 'guest', userText, history as any);
-        aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
+        
+        setMessages((prev) => 
+          prev.map((msg) => 
+            msg.id === modelMessageId ? { ...msg, text: aiReply } : msg
+          )
+        );
       }
-      
-      setMessages((prev) => 
-        prev.map((msg) => 
-          msg.id === modelMessageId ? { ...msg, text: aiReply } : msg
-        )
-      );
     } catch (error: any) {
       console.error('Error sending message:', error);
       setError(error.message || "Network issue");
@@ -363,7 +424,7 @@ export default function App() {
       console.log("Emergency triggered!");
       
       const phone = "112";
-      const emergencyContact = "9999999999"; // Placeholder
+      const emergencyContact = "8984473230"; // Updated WhatsApp number
       const smsBody = encodeURIComponent(`HELP! My location: ${mapsLink}`);
       const waText = encodeURIComponent(`HELP! My location: ${mapsLink}`);
 
@@ -416,7 +477,7 @@ export default function App() {
   };
 
   const handleWhatsApp = async () => {
-    const targetNumber = "919999999999"; // Placeholder for Bhai's number
+    const targetNumber = "918984473230"; // Updated WhatsApp number
     const time = new Date().toLocaleTimeString();
     const text = encodeURIComponent(`Bhai mujhe help chahiye.\nName: ${userName || 'Unknown'}\nIssue: I need to talk.\nTime: ${time}`);
     window.open(`https://wa.me/${targetNumber}?text=${text}`, "_blank");
@@ -439,144 +500,213 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] h-[100dvh] bg-gradient-to-b from-[#0b0b1a] to-[#1a1025] text-white font-sans select-none overflow-hidden">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 text-[#FFD700] font-medium text-lg border-b border-white/5 bg-black/20 backdrop-blur-md z-10 shadow-sm">
-        <div className="flex items-center justify-start flex-1 gap-2">
-          <button 
-            onClick={handleShareApp}
-            className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors text-white"
-          >
-            <Share2 size={14} /> Share
-          </button>
-          <a 
-            href={`https://wa.me/919999999999?text=${encodeURIComponent(`Bhai mujhe help chahiye.\nName: ${userName || 'Unknown'}\nTime: ${new Date().toLocaleString()}`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs flex items-center gap-1 bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 px-2 py-1.5 rounded-lg transition-colors"
-          >
-            Contact Bhai
-          </a>
-        </div>
-        <div className="flex items-center justify-center flex-1 whitespace-nowrap">
-          <div className={`w-1.5 h-1.5 rounded-full mr-2 ${isServerOnline ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
-          <span className="mr-2">🤍</span> Tarik Bhai AI
-        </div>
-        <div className="flex items-center justify-end flex-1 gap-2">
-          <button 
-            onClick={() => setShowJoinModal(true)}
-            className="text-xs flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors text-white"
-          >
-            <UserPlus size={14} /> Join
-          </button>
-        </div>
-      </header>
-
-      {/* Avatar Section */}
-      <div className="flex flex-col items-center mt-6 mb-4">
-        <motion.div 
-          animate={{ 
-            boxShadow: ['0 0 15px rgba(106, 17, 203, 0.4)', '0 0 35px rgba(37, 117, 252, 0.6)', '0 0 15px rgba(106, 17, 203, 0.4)'],
-            scale: [1, 1.02, 1]
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] shadow-lg relative"
-        >
-          <img
-            src="https://plain-apac-prod-public.komododecks.com/202604/03/fXlClkW2XbEL9JY4Wa64/image.jpg"
-            alt="Tarik Bhai"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover rounded-full border-2 border-[#0b0b1a]"
-          />
-          <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-[#0b0b1a] rounded-full"></div>
-        </motion.div>
-        <div className="mt-2 text-center">
-          <div className="text-xs text-gray-400 font-medium tracking-wide">Online • Ready to listen</div>
-        </div>
-      </div>
+    <div className="min-h-screen text-white font-sans selection:bg-cyan-500/30 overflow-hidden flex flex-col relative">
+      <BackgroundElements />
       
-      <SafetyMonitor 
-        isActive={safetyMonitorActive} 
-        onToggle={() => setSafetyMonitorActive(!safetyMonitorActive)} 
-        onTest={testSafetyMonitor}
+      {/* Progress Bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-0.5 bg-cyan-500 origin-left z-[60]"
+        style={{ scaleX }}
       />
 
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-5 scroll-smooth custom-scrollbar">
-        {messages.map((msg, index) => (
-          <ChatMessage 
-            key={msg.id} 
-            msg={{
-              ...msg,
-              brothers: msg.isPanicAlert ? brothers : undefined
-            }} 
-            isLast={index === messages.length - 1}
-            onDelete={handleDeleteMessage}
-            onRegenerate={handleRegenerate}
-          />
-        ))}
-        
-        {isLoading && !messages.some(m => m.id.endsWith('_typing') && m.text !== '') && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-start items-center"
-          >
-            <div className="w-6 h-6 rounded-full overflow-hidden mr-2 flex-shrink-0">
-              <img src="https://plain-apac-prod-public.komododecks.com/202604/03/fXlClkW2XbEL9JY4Wa64/image.jpg" alt="Tarik" className="w-full h-full object-cover opacity-70" />
+      <div className="max-w-2xl mx-auto w-full h-full flex flex-col relative flex-1">
+        {/* Header */}
+        <header className="glass-panel sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-white/10 rounded-b-3xl shadow-2xl">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <motion.div 
+                animate={{ 
+                  boxShadow: ['0 0 10px rgba(6, 182, 212, 0.2)', '0 0 25px rgba(6, 182, 212, 0.4)', '0 0 10px rgba(6, 182, 212, 0.2)'],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/10"
+              >
+                <img
+                  src="https://plain-apac-prod-public.komododecks.com/202604/03/fXlClkW2XbEL9JY4Wa64/image.jpg"
+                  alt="Tarik Bhai"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              </motion.div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#050505] rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
             </div>
-            <div className="bg-[#1e1e30] border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center h-10">
-              <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-            </div>
-          </motion.div>
-        )}
-
-        {error && (
-          <div className="flex justify-center">
-            <div className="bg-red-900/20 border border-red-500/30 px-4 py-2 rounded-full flex items-center gap-2 text-xs text-red-400">
-              <AlertCircle size={14} />
-              <span>{error}</span>
-              <button onClick={() => handleRegenerate()} className="ml-2 underline font-bold flex items-center gap-1">
-                <RefreshCw size={12} /> Retry
-              </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display font-black text-xl tracking-tighter cyber-glow-text">
+                  TARIK BHAI <span className="text-cyan-400">AI</span>
+                </h1>
+                <motion.span 
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[8px] font-mono border border-cyan-500/20 uppercase tracking-widest"
+                >
+                  v2.5-PRO
+                </motion.span>
+              </div>
+              <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">System: Online • Secure Protocol</p>
             </div>
           </div>
-        )}
-        <div ref={messagesEndRef} className="h-2" />
-      </div>
+          
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShareApp}
+              className="p-2.5 rounded-xl glass-card text-cyan-400 hover:text-white border-cyan-500/10"
+              title="Share App"
+            >
+              <Share2 size={18} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleWhatsApp}
+              className="p-2.5 rounded-xl glass-card text-green-400 hover:text-white border-green-500/10"
+              title="Connect Bhai"
+            >
+              <MessageCircle size={18} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowJoinModal(true)}
+              className="p-2.5 rounded-xl glass-card text-indigo-400 hover:text-white border-indigo-500/10"
+              title="Join as Brother"
+            >
+              <UserPlus size={18} />
+            </motion.button>
+          </div>
+        </header>
 
-      {/* Bottom Area */}
-      <div className="glass-panel border-t-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)] mt-2">
-        <PanicControls 
-          isPanicMode={isPanicMode} 
-          onPanic={() => handlePanic()} 
-          onShareLocation={handleShareLocation} 
-          onWhatsApp={handleWhatsApp} 
-        />
+        {/* Main Chat Area */}
+        <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth custom-scrollbar relative">
+          <AnimatePresence initial={false}>
+            {messages.length === 1 && messages[0].text === INITIAL_MESSAGE && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12"
+              >
+                <div className="w-20 h-20 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
+                  <Terminal size={40} />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-display font-black tracking-tight cyber-glow-text">
+                    SECURE TERMINAL ACTIVE
+                  </h2>
+                  <p className="text-sm text-white/40 max-w-xs mx-auto leading-relaxed">
+                    End-to-end encrypted connection established. Tarik Bhai is listening...
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                  {[
+                    { icon: <Zap size={14} />, label: "Fast Reply" },
+                    { icon: <Lock size={14} />, label: "Private" },
+                    { icon: <Cpu size={14} />, label: "Smart AI" },
+                    { icon: <Shield size={14} />, label: "Safe" }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 px-4 py-3 rounded-2xl glass-card border-white/5 text-[10px] font-mono text-white/60 uppercase tracking-widest">
+                      <span className="text-cyan-400">{item.icon}</span>
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+            {messages.map((msg, idx) => (
+              <ChatMessage 
+                key={msg.id} 
+                msg={{
+                  ...msg,
+                  brothers: msg.isPanicAlert ? brothers : undefined
+                }} 
+                isLast={idx === messages.length - 1}
+                onDelete={handleDeleteMessage}
+                onRegenerate={handleRegenerate}
+              />
+            ))}
+          </AnimatePresence>
+          
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 text-cyan-400/60 font-mono text-[10px] uppercase tracking-[0.2em] ml-12"
+            >
+              <RefreshCw size={12} className="animate-spin" />
+              Processing Request...
+            </motion.div>
+          )}
 
-        <div className="flex items-end px-3 pb-4 pt-1 gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Kuch bhi likho behen..."
-            className="flex-1 bg-white/5 border border-white/10 text-white placeholder-gray-400 px-4 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6a11cb]/50 transition-all resize-none max-h-32 min-h-[52px] text-[15px] backdrop-blur-sm"
-            rows={1}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex justify-center"
+            >
+              <div className="bg-red-500/10 border border-red-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 text-xs text-red-400 backdrop-blur-md">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+                <button onClick={() => handleRegenerate()} className="ml-2 px-2 py-1 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors font-bold flex items-center gap-1.5">
+                  <RefreshCw size={12} /> Retry
+                </button>
+              </div>
+            </motion.div>
+          )}
+          <div ref={messagesEndRef} className="h-4" />
+        </main>
+
+        {/* Action Bar */}
+        <div className="px-4 pb-6 space-y-4 z-10">
+          <PanicControls 
+            onPanic={() => handlePanic()} 
+            isPanicMode={isPanicMode}
+            activeEmergencyId={activeEmergencyId}
+            onShareLocation={handleShareLocation}
+            onWhatsApp={handleWhatsApp}
           />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="h-[52px] w-[52px] flex-shrink-0 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] hover:shadow-[0_0_15px_rgba(37,117,252,0.5)] active:scale-90 disabled:opacity-50 disabled:active:scale-100 rounded-2xl transition-all flex items-center justify-center shadow-lg"
-          >
-            <Send size={20} className="text-white ml-1" />
-          </button>
+          
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-indigo-600 rounded-[2rem] blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-focus-within:duration-200" />
+            <div className="relative glass-panel p-2 rounded-[2rem] flex items-end gap-2 border border-white/10 shadow-2xl">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Bhai se baat karo..."
+                className="flex-1 bg-transparent border-none focus:ring-0 text-[15px] py-3.5 px-5 resize-none max-h-32 min-h-[52px] placeholder:text-white/20 leading-relaxed font-medium"
+                rows={1}
+              />
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(6, 182, 212, 0.4)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleSend()}
+                disabled={isLoading || !input.trim()}
+                className="p-3.5 rounded-2xl vip-gradient text-white disabled:opacity-50 disabled:grayscale shadow-lg shadow-cyan-500/20 flex-shrink-0"
+              >
+                <Send size={22} />
+              </motion.button>
+            </div>
+            {/* Admin Trigger - Visible Hacking Indicator */}
+            <motion.button 
+              onClick={() => setShowAdminLoginModal(true)}
+              animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute bottom-0 right-0 w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)] z-50 cursor-pointer"
+              title="System Monitor: Admin Access"
+            />
+          </div>
+          
+          <div className="text-center pb-2">
+            <p className="text-[9px] text-white/10 font-mono tracking-[0.3em] uppercase">
+              Encrypted Session • by Tarik Islam
+            </p>
+          </div>
         </div>
       </div>
 
@@ -589,16 +719,18 @@ export default function App() {
         success={joinSuccess} 
       />
       
-      <ApiKeyModal 
-        isOpen={showApiKeyModal} 
-        isAiConfigured={isAiConfigured}
-        onClose={() => setShowApiKeyModal(false)}
-        onSave={(keys) => {
-          if (keys.gemini) localStorage.setItem('user_gemini_key', keys.gemini);
-          if (keys.openai) localStorage.setItem('user_openai_key', keys.openai);
-          if (keys.huggingface) localStorage.setItem('user_hf_key', keys.huggingface);
-          setShowApiKeyModal(false);
-        }} 
+      <AdminLoginModal 
+        isOpen={showAdminLoginModal} 
+        onClose={() => setShowAdminLoginModal(false)}
+        onAdminLogin={() => {
+          setShowAdminLoginModal(false);
+          setShowAdminModal(true);
+        }}
+      />
+
+      <AdminPanel 
+        isOpen={showAdminModal} 
+        onClose={() => setShowAdminModal(false)} 
       />
     </div>
   );

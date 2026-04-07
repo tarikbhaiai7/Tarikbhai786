@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface SafetyMonitorProps {
   isActive: boolean;
@@ -13,25 +14,31 @@ export const SafetyMonitor: React.FC<SafetyMonitorProps> = ({
   onTest 
 }) => {
   return (
-    <div className="flex justify-center items-center gap-2 mb-4">
-      <button 
+    <div className="flex justify-center items-center gap-3">
+      <motion.button 
+        whileHover={{ scale: 1.05, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+        whileTap={{ scale: 0.95 }}
         onClick={onToggle}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-full text-[9px] font-mono font-bold transition-all backdrop-blur-md border ${
           isActive 
-            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-            : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]' 
+            : 'bg-white/5 text-white/20 border-white/10 hover:bg-white/10'
         }`}
       >
-        {isActive ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
-        {isActive ? 'Safety Monitor: ON' : 'Safety Monitor: OFF'}
-      </button>
+        {isActive ? <ShieldCheck size={14} className="text-cyan-400" /> : <ShieldAlert size={14} />}
+        <span className="tracking-[0.2em] uppercase">
+          {isActive ? 'MONITOR: ACTIVE' : 'MONITOR: OFFLINE'}
+        </span>
+      </motion.button>
       {isActive && onTest && (
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(168, 85, 247, 0.1)' }}
+          whileTap={{ scale: 0.95 }}
           onClick={onTest} 
-          className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
+          className="text-[9px] glass-card px-3 py-2 rounded-full text-white/20 hover:text-white/60 transition-colors border-white/5 font-mono font-bold uppercase tracking-widest"
         >
-          Test (Skip 7h)
-        </button>
+          DEBUG_MODE
+        </motion.button>
       )}
     </div>
   );

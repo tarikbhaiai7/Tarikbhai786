@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, MapPin, MessageCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface PanicControlsProps {
   isPanicMode: boolean;
@@ -15,32 +16,49 @@ export const PanicControls: React.FC<PanicControlsProps> = ({
   onWhatsApp 
 }) => {
   return (
-    <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
-      <button 
+    <div className="flex flex-col px-1 pt-2 pb-1 gap-3">
+      <motion.button 
+        whileHover={!isPanicMode ? { scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.15)' } : {}}
+        whileTap={!isPanicMode ? { scale: 0.98 } : {}}
         onClick={onPanic}
         disabled={isPanicMode}
-        className={`w-full flex items-center justify-center gap-2 py-4 transition-all rounded-xl text-base sm:text-lg font-bold border-2 ${
+        className={`w-full flex items-center justify-center gap-3 py-4 transition-all rounded-2xl text-base sm:text-lg font-black border-2 relative overflow-hidden ${
           isPanicMode 
-            ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.8)] cursor-default' 
-            : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-red-500/50 active:scale-95 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
+            ? 'bg-red-600 text-white border-red-400 animate-pulse shadow-[0_0_40px_rgba(220,38,38,0.8)]' 
+            : 'bg-red-500/5 text-red-500 hover:text-red-400 border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.1)]'
         }`}
       >
-        <AlertTriangle size={24} className={isPanicMode ? 'animate-bounce' : ''} /> 
-        {isPanicMode ? '🚨 EMERGENCY ACTIVE 🚨' : '🚨 PANIC BUTTON 🚨'}
-      </button>
-      <div className="flex justify-between gap-2">
-        <button 
+        {isPanicMode && (
+          <motion.div 
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+          />
+        )}
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+        <AlertTriangle size={24} className={isPanicMode ? 'animate-bounce' : 'relative z-10'} /> 
+        <span className="tracking-[0.2em] uppercase relative z-10 font-mono">
+          {isPanicMode ? 'SYSTEM ALERT: EMERGENCY' : 'INITIATE PANIC PROTOCOL'}
+        </span>
+      </motion.button>
+      
+      <div className="flex justify-between gap-3">
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+          whileTap={{ scale: 0.98 }}
           onClick={onShareLocation}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 active:scale-95 transition-all rounded-xl text-xs sm:text-sm font-semibold border border-blue-500/20"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 glass-card text-cyan-400 hover:text-cyan-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-cyan-500/20 shadow-lg uppercase tracking-widest"
         >
-          <MapPin size={16} /> Share Location
-        </button>
-        <button 
+          <MapPin size={16} /> Broadcast Location
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+          whileTap={{ scale: 0.98 }}
           onClick={onWhatsApp}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 active:scale-95 transition-all rounded-xl text-xs sm:text-sm font-semibold border border-green-500/20"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 glass-card text-green-400 hover:text-green-300 transition-all rounded-2xl text-[10px] sm:text-xs font-mono font-bold border border-green-500/20 shadow-lg uppercase tracking-widest"
         >
-          <MessageCircle size={16} /> Contact Bhai
-        </button>
+          <MessageCircle size={16} /> Secure Connect
+        </motion.button>
       </div>
     </div>
   );

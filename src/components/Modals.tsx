@@ -95,76 +95,36 @@ export const JoinModal: React.FC<JoinModalProps> = ({ isOpen, onClose, onSubmit,
   );
 };
 
-interface ApiKeyModalProps {
+interface AdminLoginModalProps {
   isOpen: boolean;
-  isAiConfigured?: boolean;
-  onSave: (keys: { gemini?: string; openai?: string; huggingface?: string }) => void;
-  onClose?: () => void;
+  onClose: () => void;
+  onAdminLogin: () => void;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, isAiConfigured, onSave, onClose }) => {
-  const [gemini, setGemini] = React.useState(localStorage.getItem('user_gemini_key') || '');
-  const [openai, setOpenai] = React.useState(localStorage.getItem('user_openai_key') || '');
-  const [huggingface, setHuggingface] = React.useState(localStorage.getItem('user_hf_key') || '');
-
+export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClose, onAdminLogin }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose || (() => {})} title="AI API Keys Configuration">
-      <div className="space-y-4">
-        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 mb-2">
-          <Key size={24} />
-        </div>
-        <p className="text-sm text-gray-400">AI se baat karne ke liye kam se kam ek API key chahiye. Yeh keys sirf aapke browser mein save hongi.</p>
-        
-        {isAiConfigured && (
-          <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl text-[11px] text-green-400">
-            Backend is already configured! You can skip this or add your own keys for faster response.
+    <Modal isOpen={isOpen} onClose={onClose} title="Admin Access">
+      <div className="space-y-6 py-4">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
+            <Key size={32} />
           </div>
-        )}
+          <div>
+            <h3 className="font-bold text-lg">Tarik Bhai's Dashboard</h3>
+            <p className="text-xs text-gray-400 mt-1">Only authorized access allowed.</p>
+          </div>
+        </div>
         
-        <div className="space-y-2">
-          <label className="text-xs text-gray-500 font-medium">Gemini API Key (Recommended)</label>
-          <input 
-            type="password" 
-            placeholder="Paste Gemini API Key..." 
-            value={gemini}
-            onChange={(e) => setGemini(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs text-gray-500 font-medium">OpenAI API Key (Optional)</label>
-          <input 
-            type="password" 
-            placeholder="Paste OpenAI API Key..." 
-            value={openai}
-            onChange={(e) => setOpenai(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs text-gray-500 font-medium">Hugging Face API Key (Optional)</label>
-          <input 
-            type="password" 
-            placeholder="Paste HF API Key..." 
-            value={huggingface}
-            onChange={(e) => setHuggingface(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors text-sm"
-          />
-        </div>
-
         <button 
-          onClick={() => onSave({ gemini, openai, huggingface })}
-          disabled={!gemini.trim() && !openai.trim() && !huggingface.trim()}
-          className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 mt-2"
+          onClick={onAdminLogin}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
         >
-          Save & Continue
+          <ShieldCheck size={18} />
+          Open Admin Login
         </button>
         
-        <div className="flex flex-col gap-1 text-[10px] text-center text-gray-500">
-          <p>Get Gemini Key: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-400 underline">AI Studio</a></p>
-          <p>Get OpenAI Key: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-blue-400 underline">OpenAI Platform</a></p>
+        <div className="text-[10px] text-center text-gray-500">
+          Securely managed by Tarik Islam
         </div>
       </div>
     </Modal>

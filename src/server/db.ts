@@ -100,6 +100,11 @@ export const db = {
     const data = readDB();
     return [...data.chats].reverse().slice(0, limitCount);
   },
+  async deleteChat(timestamp: string): Promise<void> {
+    const data = readDB();
+    data.chats = data.chats.filter((c: Chat) => c.timestamp !== timestamp);
+    writeDB(data);
+  },
 
   // Emergencies
   async addEmergency(emergency: Emergency): Promise<string> {
@@ -109,6 +114,11 @@ export const db = {
     data.emergencies.push(newEmergency);
     writeDB(data);
     return id;
+  },
+  async deleteEmergency(id: string): Promise<void> {
+    const data = readDB();
+    data.emergencies = data.emergencies.filter((e: any) => e.id !== id);
+    writeDB(data);
   },
   async getActiveEmergencyCount(): Promise<number> {
     const data = readDB();
@@ -130,6 +140,14 @@ export const db = {
     data.locations[userId].push(location);
     // Keep only last 50 locations per user
     if (data.locations[userId].length > 50) data.locations[userId].shift();
+    writeDB(data);
+  },
+  async deleteUser(userId: string): Promise<void> {
+    const data = readDB();
+    delete data.users[userId];
+    delete data.locations[userId];
+    data.chats = data.chats.filter((c: Chat) => c.userId !== userId);
+    data.emergencies = data.emergencies.filter((e: any) => e.userId !== userId);
     writeDB(data);
   },
   async getUserLocations(userId: string): Promise<Location[]> {
