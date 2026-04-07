@@ -79,7 +79,7 @@ export const aiService = {
       }
     }
 
-    throw new Error("No AI providers available or all failed. Please check your API keys.");
+    return null;
   },
 
   async getGeminiResponse(message: string, history: any[], apiKey: string) {

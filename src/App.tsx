@@ -32,6 +32,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isServerOnline, setIsServerOnline] = useState(true);
   const [isAiConfigured, setIsAiConfigured] = useState(false);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(true);
   
   // Modals
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -62,6 +63,8 @@ export default function App() {
       } catch (e) {
         setIsServerOnline(false);
         setIsAiConfigured(false);
+      } finally {
+        setIsCheckingHealth(false);
       }
     };
     checkHealth();
@@ -124,20 +127,17 @@ export default function App() {
 
   // Check for API Keys
   useEffect(() => {
+    if (isCheckingHealth) return;
+
     // Only show modal if NO local keys AND backend says it's NOT configured
     const gemini = localStorage.getItem('user_gemini_key');
     const openai = localStorage.getItem('user_openai_key');
     const hf = localStorage.getItem('user_hf_key');
     
-    // Wait a bit for health check to complete
-    const timer = setTimeout(() => {
-      if (!gemini && !openai && !hf && !isAiConfigured) {
-        setShowApiKeyModal(true);
-      }
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, [isAiConfigured]);
+    if (!gemini && !openai && !hf && !isAiConfigured) {
+      setShowApiKeyModal(true);
+    }
+  }, [isAiConfigured, isCheckingHealth]);
 
   // Fetch Brothers
   useEffect(() => {
@@ -324,17 +324,23 @@ export default function App() {
       try {
         aiReply = await aiService.getResponse(userText, history);
         
-        // Save Chat to Firestore (Try-catch to handle permission errors if not authed)
-        try {
-          await setDoc(doc(db, 'chats', chatId), {
-            ...chatData,
-            reply: aiReply
-          });
-        } catch (dbErr) {
-          console.warn("Firestore save failed (likely unauthenticated)", dbErr);
-        }
+        if (!aiReply) {
+          console.log("No local AI keys, falling back to backend");
+          const data = await api.chat(userId || 'guest', userText, history as any);
+          aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
+        } else {
+          // Save Chat to Firestore (Try-catch to handle permission errors if not authed)
+          try {
+            await setDoc(doc(db, 'chats', chatId), {
+              ...chatData,
+              reply: aiReply
+            });
+          } catch (dbErr) {
+            console.warn("Firestore save failed (likely unauthenticated)", dbErr);
+          }
 
-        api.logChat(userId || 'guest', userText, aiReply);
+          api.logChat(userId || 'guest', userText, aiReply);
+        }
       } catch (geminiError) {
         console.warn("Frontend Gemini failed, falling back to backend", geminiError);
         const data = await api.chat(userId || 'guest', userText, history as any);
