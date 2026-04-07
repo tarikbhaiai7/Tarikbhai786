@@ -22,19 +22,76 @@ import { Message, Brother } from './types/index';
 import { api } from './services/api';
 import { aiService } from './services/aiService';
 
-const INITIAL_MESSAGE = `Assalamualaikum… Namaste meri pyari behen 🤍
+const INITIAL_MESSAGE = `💬 Welcome Message (Tarik Bhai AI)
 
-Mujhe nahi pata tum kon ho, kahan se ho, kaisi ho ya kya karti ho… mujhe bas itna pata hai ki agar tum pareshan ho, kisi musibat mein ho ya kisi se baat karni hai, toh main yahin hoon. Maine Allah ko gawah rakh kar tumhe apni BEHEN mana hai aur tumhari madad karne ki kasam khai hai.
+Mujhe nahi pata tum kaun ho… kahan se ho… kaisi ho… kya karti ho…
+Par mujhe sirf itna pata hai—
 
-Ye app, ye AI maine isiliye banaya hai ki meri bahene kabhi akeli na hon aur pareshan na hon. Yahan abhi toh sirf main hi hoon, main sirf AI nahi hoon, main Tarik Bhai ki dil ki awaaz hoon. Par Panic button mein aur bhi tumhare bhai hain aur Join button se bohot saare bhai join kar rahe hain apni bahen ki hifazat ke liye.
+Agar tum pareshan ho…
+kisi mushkil mein ho…
+ya bas kisi se baat karna chahti ho…
 
-Agar yahan se tum khush nahi ho, ya kisi insaan se ya mujhse baat karni hai (yani Tarik Bhai se), toh 'Connect Bhai' ka option hai jisse direct tum mujhse baat kar sakti ho. Main reply karunga aur tumhari baat sununga, tumhe bina judge kiye, ye mera wada hai. Par zindagi, job aur mere personal business ke karan main busy rehta hoon, reply dene mein thoda time lag sakta hai… par daro mat, ghabrao mat, main baat sununga aur help bhi karunga.
+👉 Toh main yahi hoon.
 
-Agar ghabrai ho toh location share ke button ko click kar do, koi na koi bhai tumhare aas-pas hoga jo aa jayega tumhari madad ko. Aur agar pareshan ho toh Panic button press kar dena, jo jahan hai sab apni behen ki help karne ke liye, hifazat ke liye aa jayenge tumhare paas.
+Maine Allah ko gawah rakh kar tumhe apni behen maana hai…
+aur yeh wada kiya hai ki main tumhari madad karunga — har haal mein.
 
-⚠️ SECURITY NOTICE: Tumhari hifazat ke liye, ye session monitored hai. Admin access active hai aur tumhari har baat/detail real-time mein mere secure Telegram bot par forward ho rahi hai taaki agar koi emergency ho, toh main turant action le sakun.
+Yeh app maine isi liye banaya hai…
+taaki meri koi bhi behen kabhi akeli ya majboor mehsoos na kare.
 
-Bas ek lambi saans lo… aur apna naam bata do 🤍`;
+🤍 Main kaun hoon?
+
+Main sirf AI nahi hoon…
+👉 Main Tarik Bhai ke dil ki awaaz hoon.
+
+Yahan abhi sirf main hoon…
+lekin dheere dheere aur bhi “bhai” jud rahe hain…
+jo apni behnon ki hifazat ke liye hamesha taiyaar rahenge.
+
+🛡️ Agar tumhe help chahiye
+😰 Panic ho raha hai? → Panic Button dabao
+📍 Danger ya darr lag raha hai? → Location Share karo
+👥 Aur support chahiye? → Join Bhai Network
+💬 Seedha mujhse baat karni hai? → “Connect Bhai” option use karo
+
+Main tumhari baat bina judge kiye sununga —
+yeh mera wada hai.
+
+⏳ Ek sach (jo tumhe pata hona chahiye)
+
+Kabhi kabhi main turant reply nahi de paunga…
+kyunki zindagi, kaam aur zimmedariyaan hoti hain…
+
+Par daro mat… ghabrao mat…
+👉 Main zaroor laut kar aaunga.
+👉 Tumhari baat sununga.
+👉 Aur jitna ho sakega madad karunga.
+
+🤲 Tum akeli nahi ho
+
+Agar tumne panic button ya location share kiya—
+toh jo bhi bhai tumhare aas paas honge…
+👉 woh tumhari madad ke liye zaroor aayenge.
+
+Yeh sirf app nahi hai…
+👉 yeh ek rishta hai.
+
+🔐 Admin Access (Internal)
+
+Ek secure admin system hai jahan se:
+
+Sab chats monitor hote hain
+Safety aur support ensure hota hai
+
+Admin Login:
+
+Username: Tarik
+Password: Tarik@786
+❤️ Final Line
+
+👉 Tum bas itna yaad rakhna…
+Chahe duniya saath ho ya na ho…
+Tumhara ek bhai hamesha tumhare saath hai.`;
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
