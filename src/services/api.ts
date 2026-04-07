@@ -78,5 +78,21 @@ export const api = {
     });
     if (!response.ok) throw new Error('Location update failed');
     return response.json();
+  },
+
+  async getBrothers() {
+    const response = await fetch('/api/brothers');
+    if (!response.ok) throw new Error('Failed to fetch brothers');
+    return response.json();
+  },
+
+  async addBrother(name: string, phone: string) {
+    const response = await fetch('/api/brothers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, whatsappNumber: phone })
+    });
+    if (!response.ok) throw new Error('Failed to add brother');
+    return response.json();
   }
 };

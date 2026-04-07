@@ -1,20 +1,34 @@
-import * as admin from 'firebase-admin';
-import firebaseConfig from '../../firebase-applet-config.json';
+import fs from 'fs';
+import path from 'path';
 
-// Initialize Firebase Admin
-// In AI Studio/Cloud Run, it will try to use default credentials
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: firebaseConfig.projectId,
-    databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
-  });
+const DB_FILE = path.resolve(process.cwd(), 'data.json');
+
+// Initialize local DB if not exists
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({
+    users: {},
+    chats: [],
+    emergencies: [],
+    brothers: [],
+    locations: {}
+  }, null, 2));
 }
 
-const firestore = admin.firestore();
-// Use the specific database ID if provided
-if (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)') {
-  // Note: firebase-admin v11+ supports multiple databases via firestore(databaseId)
-  // But for simplicity and compatibility, we'll assume the default or use the project default
+function readDB() {
+  try {
+    const data = fs.readFileSync(DB_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (e) {
+    return { users: {}, chats: [], emergencies: [], brothers: [], locations: {} };
+  }
+}
+
+function writeDB(data: any) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("Failed to write to local DB:", e);
+  }
 }
 
 export interface User {
@@ -47,100 +61,95 @@ export interface Location {
   timestamp: string;
 }
 
+export interface Brother {
+  id: string;
+  name: string;
+  whatsappNumber: string;
+  createdAt: string;
+}
+
 export const db = {
   // Users
   async getUser(userId: string): Promise<User | undefined> {
-    try {
-      const docRef = firestore.collection('users').doc(userId);
-      const docSnap = await docRef.get();
-      return docSnap.exists ? (docSnap.data() as User) : undefined;
-    } catch (e) {
-      console.error(`Error getting user ${userId}:`, e);
-      return undefined;
-    }
+    const data = readDB();
+    return data.users[userId];
   },
   async setUser(userId: string, user: User): Promise<void> {
-    await firestore.collection('users').doc(userId).set(user);
+    const data = readDB();
+    data.users[userId] = user;
+    writeDB(data);
   },
   async getAllUsers(): Promise<User[]> {
-    const querySnapshot = await firestore.collection('users').get();
-    return querySnapshot.docs.map(doc => doc.data() as User);
+    const data = readDB();
+    return Object.values(data.users);
   },
   async getUserCount(): Promise<number> {
-    try {
-      const querySnapshot = await firestore.collection('users').get();
-      return querySnapshot.size;
-    } catch (e) {
-      console.error("Error getting user count:", e);
-      return 0;
-    }
+    const data = readDB();
+    return Object.keys(data.users).length;
   },
 
   // Chats
   async addChat(chat: Chat): Promise<void> {
-    await firestore.collection('chats').add(chat);
+    const data = readDB();
+    data.chats.push(chat);
+    // Keep only last 1000 chats to prevent file bloat
+    if (data.chats.length > 1000) data.chats.shift();
+    writeDB(data);
   },
   async getChats(limitCount: number = 50): Promise<Chat[]> {
-    const querySnapshot = await firestore.collection('chats')
-      .orderBy('timestamp', 'desc')
-      .limit(limitCount)
-      .get();
-    return querySnapshot.docs.map(doc => doc.data() as Chat);
+    const data = readDB();
+    return [...data.chats].reverse().slice(0, limitCount);
   },
 
   // Emergencies
   async addEmergency(emergency: Emergency): Promise<string> {
-    const docRef = await firestore.collection('emergencies').add(emergency);
-    return docRef.id;
+    const data = readDB();
+    const id = `emergency_${Date.now()}`;
+    const newEmergency = { ...emergency, id };
+    data.emergencies.push(newEmergency);
+    writeDB(data);
+    return id;
   },
   async getActiveEmergencyCount(): Promise<number> {
-    try {
-      const querySnapshot = await firestore.collection('emergencies')
-        .where('status', '==', 'active')
-        .get();
-      return querySnapshot.size;
-    } catch (e) {
-      console.error("Error getting active emergency count:", e);
-      return 0;
-    }
+    const data = readDB();
+    return data.emergencies.filter((e: any) => e.status === 'active').length;
   },
   async getAllEmergencies(limitCount: number = 50): Promise<Emergency[]> {
-    const querySnapshot = await firestore.collection('emergencies')
-      .orderBy('timestamp', 'desc')
-      .limit(limitCount)
-      .get();
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Emergency));
+    const data = readDB();
+    return [...data.emergencies].reverse().slice(0, limitCount);
   },
   async hasActiveEmergency(userId: string): Promise<boolean> {
-    const querySnapshot = await firestore.collection('emergencies')
-      .where('userId', '==', userId)
-      .where('status', '==', 'active')
-      .get();
-    return !querySnapshot.empty;
+    const data = readDB();
+    return data.emergencies.some((e: any) => e.userId === userId && e.status === 'active');
   },
 
   // Locations
   async addLocation(userId: string, location: Location): Promise<void> {
-    await firestore.collection('users').doc(userId).collection('locations').add(location);
+    const data = readDB();
+    if (!data.locations[userId]) data.locations[userId] = [];
+    data.locations[userId].push(location);
+    // Keep only last 50 locations per user
+    if (data.locations[userId].length > 50) data.locations[userId].shift();
+    writeDB(data);
   },
   async getUserLocations(userId: string): Promise<Location[]> {
-    const querySnapshot = await firestore.collection('users').doc(userId).collection('locations')
-      .orderBy('timestamp', 'desc')
-      .limit(100)
-      .get();
-    return querySnapshot.docs.map(doc => doc.data() as Location);
+    const data = readDB();
+    return data.locations[userId] || [];
   },
   async getAllUserLocations(): Promise<Record<string, Location[]>> {
-    try {
-      const users = await this.getAllUsers();
-      const allLocations: Record<string, Location[]> = {};
-      for (const user of users) {
-        allLocations[user.id] = await this.getUserLocations(user.id);
-      }
-      return allLocations;
-    } catch (e) {
-      console.error("Error getting all user locations:", e);
-      return {};
-    }
+    const data = readDB();
+    return data.locations;
+  },
+
+  // Brothers
+  async addBrother(brother: Omit<Brother, 'id'>): Promise<void> {
+    const data = readDB();
+    const id = `brother_${Date.now()}`;
+    data.brothers.push({ ...brother, id });
+    writeDB(data);
+  },
+  async getBrothers(): Promise<Brother[]> {
+    const data = readDB();
+    return data.brothers;
   }
 };

@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Share2, UserPlus, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, addDoc, getDocs, serverTimestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { db, auth } from './firebase';
 import { ChatMessage } from './components/ChatMessage';
 import { PanicControls } from './components/PanicControls';
 import { SafetyMonitor } from './components/SafetyMonitor';
@@ -91,38 +88,33 @@ export default function App() {
     }
   }, []);
 
-    // Auth Listener
+    // Auth & User Initialization
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          setUserId(user.uid);
-          setUserName(user.displayName || `Sister_${user.uid.substring(0, 4)}`);
-          
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            await setDoc(userRef, {
-              id: user.uid,
-              name: user.displayName || `Sister_${user.uid.substring(0, 4)}`,
-              email: user.email || 'anonymous',
-              createdAt: new Date().toISOString()
-            });
-          }
-        } else {
+      const initUser = async () => {
+        let storedUserId = localStorage.getItem('tarik_userId');
+        let storedUserName = localStorage.getItem('tarik_userName');
+        
+        if (!storedUserId) {
           try {
-            await signInAnonymously(auth);
-          } catch (e: any) {
-            console.warn("Anonymous auth disabled in console. Using local guest mode.", e.message);
-            // Fallback to local ID if anonymous auth is disabled
-            const localId = localStorage.getItem('tarik_localId') || `guest_${Math.random().toString(36).substring(2, 9)}`;
-            localStorage.setItem('tarik_localId', localId);
-            setUserId(localId);
-            setUserName(`Sister_${localId.substring(6, 10)}`);
+            const data = await api.register(`Sister_${Math.random().toString(36).substring(2, 6)}`);
+            storedUserId = data.userId;
+            storedUserName = data.name;
+            localStorage.setItem('tarik_userId', storedUserId!);
+            localStorage.setItem('tarik_userName', storedUserName!);
+          } catch (e) {
+            storedUserId = `guest_${Math.random().toString(36).substring(2, 9)}`;
+            storedUserName = `Sister_${storedUserId.substring(6, 10)}`;
+            localStorage.setItem('tarik_userId', storedUserId);
+            localStorage.setItem('tarik_userName', storedUserName);
           }
         }
+        
+        setUserId(storedUserId);
+        setUserName(storedUserName);
         setIsAuthReady(true);
-      });
-      return () => unsubscribe();
+      };
+      
+      initUser();
     }, []);
 
   // Check for API Keys
@@ -141,15 +133,15 @@ export default function App() {
 
   // Fetch Brothers
   useEffect(() => {
-    const q = query(collection(db, 'brothers'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const brothersList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Brother[];
-      setBrothers(brothersList);
-    });
-    return () => unsubscribe();
+    const fetchBrothers = async () => {
+      try {
+        const list = await api.getBrothers();
+        setBrothers(list);
+      } catch (e) {}
+    };
+    fetchBrothers();
+    const interval = setInterval(fetchBrothers, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Save to LocalStorage
@@ -190,16 +182,6 @@ export default function App() {
     const sendLocationUpdate = async (pos: GeolocationPosition) => {
       if (!userId) return;
       try {
-        const locId = `loc_${Date.now()}`;
-        await setDoc(doc(db, 'locations', locId), {
-          id: locId,
-          userId,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Also update backend for legacy support if needed
         await api.updateLocation(userId, pos.coords.latitude, pos.coords.longitude);
       } catch (e) {
         // Silently fail for location updates
@@ -295,26 +277,7 @@ export default function App() {
     try {
       // Normal Chat Flow
       const chatId = `chat_${Date.now()}`;
-      const chatData = {
-        id: chatId,
-        userId: userId || 'guest',
-        name: userName || 'Anonymous',
-        message: userText,
-        reply: '...',
-        timestamp: new Date().toISOString()
-      };
-
-      if (isPanicMode && activeEmergencyId) {
-        try {
-          const emergencyRef = doc(db, 'emergencies', activeEmergencyId);
-          await updateDoc(emergencyRef, {
-            messages: arrayUnion({ sender: 'user', text: userText, time: new Date().toISOString() })
-          });
-        } catch (e) {
-          console.error("Failed to log emergency message", e);
-        }
-      }
-
+      
       const history = messages.map(m => ({ role: m.role, text: m.text }));
       const modelMessageId = `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       setMessages((prev) => [...prev, { id: modelMessageId, role: 'model', text: '...' }]);
@@ -329,29 +292,13 @@ export default function App() {
           const data = await api.chat(userId || 'guest', userText, history as any);
           aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
         } else {
-          // Save Chat to Firestore (Try-catch to handle permission errors if not authed)
-          try {
-            await setDoc(doc(db, 'chats', chatId), {
-              ...chatData,
-              reply: aiReply
-            });
-          } catch (dbErr) {
-            console.warn("Firestore save failed (likely unauthenticated)", dbErr);
-          }
-
+          // Log Chat to Backend
           api.logChat(userId || 'guest', userText, aiReply);
         }
       } catch (geminiError) {
         console.warn("Frontend Gemini failed, falling back to backend", geminiError);
         const data = await api.chat(userId || 'guest', userText, history as any);
         aiReply = data.text || data.error || "Hmm... kuch samajh nahi aaya behen. Phir se batana? 🤍";
-        
-        try {
-          await setDoc(doc(db, 'chats', chatId), {
-            ...chatData,
-            reply: aiReply
-          });
-        } catch (dbErr) {}
       }
       
       setMessages((prev) => 
@@ -397,18 +344,8 @@ export default function App() {
       }
 
       try {
-        const emergencyId = `emergency_${Date.now()}`;
-        await setDoc(doc(db, 'emergencies', emergencyId), {
-          id: emergencyId,
-          userId: userId || 'unknown',
-          location: locationText,
-          mapsLink,
-          timestamp: new Date().toISOString(),
-          status: 'active'
-        });
-        setActiveEmergencyId(emergencyId);
-        
-        await api.panic(userId || 'unknown', locationText, mapsLink);
+        const data = await api.panic(userId || 'unknown', locationText, mapsLink);
+        if (data.emergencyId) setActiveEmergencyId(data.emergencyId);
       } catch (panicError) {
         console.error("Backend panic alert failed", panicError);
       }
@@ -488,11 +425,7 @@ export default function App() {
   const handleJoinSubmit = async (name: string, phone: string) => {
     setIsJoining(true);
     try {
-      await addDoc(collection(db, 'brothers'), {
-        name: name.trim(),
-        whatsappNumber: phone.trim(),
-        createdAt: serverTimestamp()
-      });
+      await api.addBrother(name, phone);
       setJoinSuccess(true);
       setTimeout(() => {
         setShowJoinModal(false);

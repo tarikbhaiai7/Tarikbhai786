@@ -27,6 +27,26 @@ async function startServer() {
 
   // --- API ROUTES ---
 
+  app.get("/api/brothers", async (req, res) => {
+    try {
+      const brothers = await db.getBrothers();
+      res.json(brothers);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch brothers" });
+    }
+  });
+
+  app.post("/api/brothers", async (req, res) => {
+    try {
+      const { name, whatsappNumber } = req.body;
+      if (!name || !whatsappNumber) return res.status(400).json({ error: "Missing data" });
+      await db.addBrother({ name, whatsappNumber, createdAt: new Date().toISOString() });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to add brother" });
+    }
+  });
+
   app.get("/api/health", async (req, res) => {
     try {
       const aiConfigured = !!(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.HF_API_KEY_1 || process.env.HUGGINGFACE_API_KEY);
@@ -151,7 +171,7 @@ async function startServer() {
       const { userId, location, mapsLink } = req.body;
       const user = await db.getUser(userId);
       
-      await db.addEmergency({
+      const emergencyId = await db.addEmergency({
         userId: userId || "unknown",
         location: location || "Unknown Location",
         timestamp: new Date().toISOString(),
@@ -168,7 +188,7 @@ async function startServer() {
         timestamp: new Date().toISOString()
       });
 
-      res.json({ success: true, message: "Alert dispatched." });
+      res.json({ success: true, message: "Alert dispatched.", emergencyId });
     } catch (error) {
       res.status(500).json({ error: "Failed to dispatch alerts" });
     }
